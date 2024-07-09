@@ -1,6 +1,7 @@
 # pulseq-sequences
 This is a matlab toolbox for creating MR pulse sequences in the pulseq framework that are compatible with field monitoring and motion tracking using NMR probes. 
 The toolbox is built based on pulseq sequences for field monitoring provided by Skope MRT (see below for more detail) and pulseq (see the pulseq folder for more detail). 
+The time optimal spiral gradient design is devised using an implementation generously shared by Michael Lustig at https://people.eecs.berkeley.edu/~mlustig/Software.html. 
 
 If you use the `Spiral2d_moco.m` for creating a spiral sequence, please consider citing the following abstract:
 - Wu, X., et al. "Single-shot 2D spiral imaging of the human brain at 10.5 Tesla using 128 receive channels: initial experience." ISMRM 2024, p3936.
