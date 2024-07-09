@@ -1,3 +1,23 @@
+# pulseq-sequences
+This is a matlab toolbox for creating MR pulse sequences in the pulseq framework that are compatible with field monitoring and motion tracking using NMR probes. 
+The toolbox is built based on pulseq sequences for field monitoring provided by Skope MRT (see below for more detail) and pulseq (see the pulseq folder for more detail). 
+
+If you use the `Spiral2d_moco.m` for creating a spiral sequence, please consider citing the following abstract:
+- Wu, X., et al. "Single-shot 2D spiral imaging of the human brain at 10.5 Tesla using 128 receive channels: initial experience." ISMRM 2024, p3936.
+
+If you use the `Spiral2d_stitch.m` to create a sequence for characterizing a spiral readout using our stitching method, please consider citing the following abstract:
+- Zhang, Z., et al. "A stitching method for dynamic field monitoring using NMR probes." ISMRM 2024, p1408.
+
+
+
+### Copyright & License Notice
+This software is copyrighted by the Regents of the University of Minnesota. It can be freely used for educational and research purposes by non-profit institutions and US government agencies only. 
+Other organizations are allowed to use this software only for evaluation purposes, and any further uses will require prior approval. The software may not be sold or redistributed without prior approval. 
+One may make copies of the software for their use provided that the copies, are not sold or distributed, are used under the same terms and conditions. 
+As unestablished research software, this code is provided on an "as is'' basis without warranty of any kind, either expressed or implied. 
+The downloading, or executing any part of this software constitutes an implicit agreement to these terms. These terms and conditions are subject to change at any time without prior notice.
+
+
 # Pulseq sequences for field-monitoring
 
 Includes sequences:
