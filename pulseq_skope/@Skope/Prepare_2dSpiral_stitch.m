@@ -11,26 +11,31 @@ if this.seq_params.resolution<= 0.5e-3
     isHighRes= true;
 end
 
-fov = this.seq_params.fov/ this.seq_params.accelerationFactor;
-N= this.seq_params.N/ this.seq_params.accelerationFactor;
-alpha= this.seq_params.alpha;
-thickness= this.seq_params.thickness;
-Nslices= this.seq_params.Nslices;
-TE= this.seq_params.TE;
-gradFreeDelay= this.seq_params.gradFreeDelay;
-sliceGap= this.seq_params.sliceGap;
-nsegs2measure= this.seq_params.nSegments2measure;
-safetyMargin= this.seq_params.gradSafetyMargin;
+fov           = this.seq_params.fov / this.seq_params.accelerationFactor;
+N             = this.seq_params.N / this.seq_params.accelerationFactor;
+alpha         = this.seq_params.alpha;
+alpha_fatsat  = this.seq_params.alpha_fatsat;
+thickness     = this.seq_params.thickness;
+Nslices       = this.seq_params.Nslices;
+TE            = this.seq_params.TE;
+gradFreeDelay = this.seq_params.gradFreeDelay;
+sliceGap      = this.seq_params.sliceGap;
+nsegs2measure = this.seq_params.nSegments2measure;
+safetyMargin  = this.seq_params.gradSafetyMargin;
+Nreps         = this.seq_params.nRepeats;
+adcSamplesPerSegment = this.seq_params.maxAdcSegmentLength;
 
-Nreps = this.seq_params.nRepeats;
-adcSamplesPerSegment= this.seq_params.maxAdcSegmentLength;
+probeRadius   = this.seq_params.probeRadius;
+signalCutoff  = this.seq_params.signalCutoff;
+
+
 
 phi= 0;%pi/2; % orientation of the readout e.g. for interleaving
 
 % Create fat-sat pulse
 sat_ppm=-3.45;
 sat_freq=sat_ppm*1e-6* this.sys.B0* this.sys.gamma;
-mr_rfFatSat = mr.makeGaussPulse(110*pi/180,'system',this.sys,'Duration',8e-3,'dwell',10e-6,...
+mr_rfFatSat = mr.makeGaussPulse(alpha_fatsat*pi/180,'system',this.sys,'Duration',8e-3,'dwell',10e-6,...
     'bandwidth',abs(sat_freq),'freqOffset',sat_freq,'use','saturation');
 mr_rfFatSat.phaseOffset=-2*pi*mr_rfFatSat.freqOffset*mr.calcRfCenter(mr_rfFatSat); % compensate for the frequency-offset induced phase
 mr_gzFatSat = mr.makeTrapezoid('z',this.sys,'delay',mr.calcDuration(mr_rfFatSat),'Area',0.1/1e-4); % spoil up to 0.1mm
@@ -163,7 +168,7 @@ delayTR= this.calculateTiming(minExcitTR);
 disp('=====================')
 if ~nsegs2measure        % determine number of segments automatically
     if isHighRes % mostly dephasing dominated.
-        triggerDelays= calcTriggerDelays(grad0);
+        triggerDelays= calcTriggerDelays(grad0, probeRadius, signalCutoff);
         segDuration= max(diff(triggerDelays));
         nsegs2measure= length(triggerDelays);
         disp('-> Auto mode: High resolution scenario: ')
@@ -450,15 +455,15 @@ disp('-> Finished...')
 end
 
 %%%%=====================
-function triggerDelays= calcTriggerDelays(grad0)
+function triggerDelays= calcTriggerDelays(grad0, probeRadius, signalCutoff)
 %%% smartly segment the gradient for ultrahigh resolution
-r= 0.4e-3; % radius of the field probe in m. Our motion probe is 0.8 mm in radius per Cameron's email..
-signalCutoff= 0.35; % signal cutoff level.
+% r= 0.4e-3; % radius of the field probe in m. Our motion probe is 0.8 mm in radius per Cameron's email..
+% signalCutoff= 0.35; % signal cutoff level.
 
 % signal decay due to dephasing inside a voxel follows sinc(a) where a is the max phase angle relative to the middle of the voxel.
 x=0:0.005:1;
 maxPhase= x(find(sinc(x)>signalCutoff, 1, 'last' ))* pi; % in rads.
-maxK= maxPhase./ r;
+maxK= maxPhase./ probeRadius;
 
 grad= hz2tesla(grad0.shape(1:2,:));
 dt= grad0.dt;
