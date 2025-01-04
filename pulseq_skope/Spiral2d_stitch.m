@@ -7,8 +7,8 @@ addpath(genpath(fullfile('..','pulseq')));
 addpath(genpath(fullfile('.','src'))); % for helper functions
 
 %% Scanner specs
-seq_name = "Spiral2d_7T";          
-seq_type = "2D Spiral Stitch";
+seq_name     = "Spiral2d_7T";          
+seq_type     = "2D Spiral Stitch";
 scanner_type = "Siemens dotplus 10.5T SC72CD"; %"Siemens dotplus 10.5T HG"; %"Siemens Terra 7T SC72CD";
 
 sk = Skope(seq_name, seq_type, scanner_type);
@@ -17,8 +17,8 @@ seq_params = struct('trigChannel', 'osc0'); % 'osc0','osc1','ext1'
 seq_params.fov                 = 150e-3; % [m], 230e-3; 
 seq_params.N                   = 150;    % 375;%300;%188;%153; %230; %384; %288;%230; %256; %220; % Define FOV and resolution
 seq_params.accelerationFactor  = 1;      % 30;%16;%5;%4; % acceleration factor
-seq_params.alpha               = 10e-9;     % flip angle
-seq_params.alpha_fatsat        = 110e-11;    % flip angle for fat saturation
+seq_params.alpha               = 10;     % flip angle
+seq_params.alpha_fatsat        = 110;    % flip angle for fat saturation
 seq_params.thickness           = 2e-3;   % [m], slice
 seq_params.Nslices             = 1;      
 seq_params.sliceGap            = 1;      % 10; % slice gap in fraction of slice thickness. 
