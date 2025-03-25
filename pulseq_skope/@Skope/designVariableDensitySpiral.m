@@ -12,12 +12,16 @@ function [k,g,s,time] = designVariableDensitySpiral(this, Nitlv, isRotationallyV
 %
 %
 % created by Xiaoping Wu, 3/13/2023
+% modified by Jinyuan Zhang, 2025.03.25, Gmax and Smax for the readout gradient and other gradients could be different.
 
 res= 1e3.* res; % mm
 fov= 1e2.* fov; % cm
 
-maxGrad= mr.convert(this.sys.maxGrad,'Hz/m','mT/m','gamma',this.sys.gamma);
-maxSlew= 1e-3.*mr.convert(this.sys.maxSlew,'Hz/m','mT/m','gamma',this.sys.gamma);
+% maxGrad= mr.convert(this.sys.maxGrad,'Hz/m','mT/m','gamma',this.sys.gamma);
+% maxSlew= 1e-3.*mr.convert(this.sys.maxSlew,'Hz/m','mT/m','gamma',this.sys.gamma);
+maxGrad= this.scanner.maxGrad;
+maxSlew= this.scanner.maxSlew;
+
 Gmax= 1e-3.* tpm2gpcm(safetyMargin.* maxGrad); % mT/m -> G/cm
 Smax= 1e-3.* tpm2gpcm(safetyMargin.* maxSlew); % T/m/s -> G/cm/ms
 T= 1e3* this.sys.gradRasterTime; % ms

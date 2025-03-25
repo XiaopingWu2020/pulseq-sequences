@@ -7,10 +7,11 @@ this.seq_params.isSpiral = true;
 this.seq_params.resolution= this.seq_params.fov/ this.seq_params.N;
 
 isHighRes= false; 
-if this.seq_params.resolution<= 0.5e-3
+if this.seq_params.resolution<= 0.5e-3  
     isHighRes= true;
 end
 
+% setting for sequence parameters
 fov           = this.seq_params.fov / this.seq_params.accelerationFactor;
 N             = this.seq_params.N / this.seq_params.accelerationFactor;
 alpha         = this.seq_params.alpha;
@@ -25,6 +26,8 @@ safetyMargin  = this.seq_params.gradSafetyMargin;
 Nreps         = this.seq_params.nRepeats;
 adcSamplesPerSegment = this.seq_params.maxAdcSegmentLength;
 
+% setting for dephsing signal model
+probeType     = this.seq_params.probeType;
 probeRadius   = this.seq_params.probeRadius;
 signalCutoff  = this.seq_params.signalCutoff;
 
@@ -168,7 +171,7 @@ delayTR= this.calculateTiming(minExcitTR);
 disp('=====================')
 if ~nsegs2measure        % determine number of segments automatically
     if isHighRes % mostly dephasing dominated.
-        triggerDelays= calcTriggerDelays(grad0, probeRadius, signalCutoff);
+        triggerDelays= calcTriggerDelays(grad0, probeType, probeRadius, signalCutoff);
         segDuration= max(diff(triggerDelays));
         nsegs2measure= length(triggerDelays);
         disp('-> Auto mode: High resolution scenario: ')
@@ -455,7 +458,7 @@ disp('-> Finished...')
 end
 
 %%%%=====================
-function triggerDelays= calcTriggerDelays(grad0, probeRadius, signalCutoff)
+function triggerDelays= calcTriggerDelays(grad0, probeType, probeRadius, signalCutoff)
 %%% smartly segment the gradient for ultrahigh resolution
 % r= 0.4e-3; % radius of the field probe in m. Our motion probe is 0.8 mm in radius per Cameron's email..
 % signalCutoff= 0.35; % signal cutoff level.
@@ -465,9 +468,10 @@ x=0:0.005:1;
 maxPhase= x(find(sinc(x)>signalCutoff, 1, 'last' ))* pi; % in rads.
 maxK= maxPhase./ probeRadius;
 
-grad= hz2tesla(grad0.shape(1:2,:));
+% grad= hz2tesla(grad0.shape(1:2,:));
+grad = grad0.shape(1:2,:) / grad0.gamma;
 dt= grad0.dt;
-ktraj= calc_ktraj_from_grad(grad, false, dt);
+ktraj= calc_ktraj_from_grad(grad, probeType, false, dt);
 ktrajAbs= sqrt(ktraj(1,:).^2+ ktraj(2,:).^2);
 
 idxCutoff= 1;
@@ -479,7 +483,7 @@ while ~isempty(idxCutoff)
     if ~isempty(idxCutoff)
         idx2measure= [idx2measure idxCutoff];
         grad= grad(:, idxCutoff:end);
-        ktraj= calc_ktraj_from_grad(grad, false, dt);
+        ktraj= calc_ktraj_from_grad(grad, probeType, false, dt);
         ktrajAbs= sqrt(ktraj(1,:).^2+ ktraj(2,:).^2);
     end
 end
