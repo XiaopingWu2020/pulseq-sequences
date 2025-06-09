@@ -32,6 +32,10 @@ function Write(this, varargin)
        this.seq.setDefinition('nRepetitions', this.seq_params.nRepeats);
    end
 
+  if isfield(this.seq_params,'nShot')  % for multi-shot 2d spiral
+       this.seq.setDefinition('nShot', this.seq_params.nShot);
+   end
+
    % skope
    if isfield(this.seq_params,'delay_trig2blip')
        this.seq.setDefinition('skope_girfDelay', this.seq_params.delay_trig2blip);

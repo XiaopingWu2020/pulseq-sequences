@@ -34,6 +34,10 @@ function Prepare(this, varargin)
            this.Prepare_2dEpi_moco();
            this.isImagingSeq = true;
 
+       case ("2D EPI Stitch")
+           this.Prepare_2dEpi_stitch();
+           this.isImagingSeq = true;
+
        case ("2D Spiral")
            this.Prepare_2dSpiral();
            this.isImagingSeq = true;
@@ -44,6 +48,10 @@ function Prepare(this, varargin)
 
        case ("2D Spiral Stitch")
            this.Prepare_2dSpiral_stitch();
+           this.isImagingSeq = true;
+
+      case ("2D Spiral Stitch MultiShot")
+           this.Prepare_2dSpiral_stitch_multishot();
            this.isImagingSeq = true;
 
        otherwise
