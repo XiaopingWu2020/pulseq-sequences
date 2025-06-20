@@ -12,7 +12,7 @@ if this.seq_params.resolution<= 0.5e-3
 end
 
 % multi-shot spiral
-nShot         = this.seq_params.nShot;
+nShots         = this.seq_params.nSpiralInterleaves;
 
 % setting for sequence parameters
 fov           = this.seq_params.fov / this.seq_params.accelerationFactor;
@@ -67,10 +67,11 @@ if ~this.seq_params.isTimeOptimal % design Archimedean spiral
 else% design time optimal spiral
     %[k,g,s,time] = designVariableDensitySpiral(this, Nitlv, isRotationallyInvariant, res, fov, radius)
     Oversampling= 10;
-    nSpiralInterleaves= this.seq_params.nSpiralInterleaves; res= this.seq_params.resolution;
+    %nShots= this.seq_params.nSpiralInterleaves; 
+    res= this.seq_params.resolution;
     FOV= [fov fov]; radius= [0 1];
     isRotationallyVariant= false; %this.seq_params.isRotationallyVariant;
-    [~,vdspiral]= this.designVariableDensitySpiral(nSpiralInterleaves,isRotationallyVariant,res,FOV,radius,safetyMargin);
+    [~,vdspiral]= this.designVariableDensitySpiral(nShots,isRotationallyVariant,res,FOV,radius,safetyMargin);
     spiral_grad_shape= vdspiral.';
     adcSamplesDesired= Oversampling.* size(spiral_grad_shape,2);
 end
@@ -123,9 +124,9 @@ fprintf('Effective ADC time (ADC time/gradient duration): %f \n', this.seq_param
 % this is needed to accomodate for the ADC tuning delay
 spiral_grad_shape = [spiral_grad_shape spiral_grad_shape(:,end)];
 
-spiral_grad_shape_all = zeros(nShot, size(spiral_grad_shape, 1), size(spiral_grad_shape, 2));
-for ishot = 1:nShot
-    theta = (ishot-1)/nShot*2*pi;
+spiral_grad_shape_all = zeros(nShots, size(spiral_grad_shape, 1), size(spiral_grad_shape, 2));
+for ishot = 1:nShots
+    theta = (ishot-1)/nShots*2*pi;
     R = [cos(theta), -sin(theta), 0;
          sin(theta),  cos(theta), 0;
                   0,           0, 0];
@@ -212,7 +213,7 @@ skopeAcqDuration= trig2AdcTime + segDuration + 1e-3;
 this.seq_params.trigger2AdcTime= trig2AdcTime;
 this.seq_params.skopeAcqDuration= skopeAcqDuration;
 
-this.seq_params.nDynamics= ceil(Nreps * Nslices * nShot * nsegs2measure / (this.seq_params.nInterleaves));
+this.seq_params.nDynamics= ceil(Nreps * Nslices * nShots * nsegs2measure / (this.seq_params.nInterleaves));
 
 this.seq_params.segmentDuration= segDuration;
 fprintf('-> Max gradient segment duration (ms): %2.2f \n', 1e3.*segDuration);
@@ -308,7 +309,7 @@ switch this.seq_params.stitchMode
             this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
             for s=1:Nslices
                 this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
-                for ishot = 1:nShot
+                for ishot = 1:nShots
                     mr_gx.waveform = -spiral_grad_shape_all(ishot, 1, :);
                     mr_gy.waveform =  spiral_grad_shape_all(ishot, 2, :);
 
@@ -338,7 +339,7 @@ switch this.seq_params.stitchMode
     
                     this.seq.addBlock(mr.makeLabel('INC', 'LIN', 1));
 
-                    if ishot == nShot
+                    if ishot == nShots
                         this.seq_params.end_block = [this.seq_params.end_block, size(this.seq.blockDurations, 2)];
                     end
                 end
@@ -359,7 +360,7 @@ switch this.seq_params.stitchMode
 
         for s=1:Nslices
             this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
-            for ishot = 1:nShot
+            for ishot = 1:nShots
                 mr_gx.waveform = -spiral_grad_shape_all(ishot, 1, :);
                 mr_gy.waveform =  spiral_grad_shape_all(ishot, 2, :);
                 this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);

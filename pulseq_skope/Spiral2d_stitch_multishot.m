@@ -16,14 +16,16 @@ scanner_type = "Siemens dotplus 10.5T SC72CD"; %"Siemens dotplus 10.5T HG"; %"Si
 sk = Skope(seq_name, seq_type, scanner_type);
 
 % Gmax and Smax for conventional gradients.
-sk.sys.maxGrad = 60*1e-3 * sk.sys.gamma;  % [Hz]
-sk.sys.maxSlew = 170     * sk.sys.gamma;  % [Hz]
+% NOTE: the Gmax and Smax should be set in Set_scanner.m
+% Let's use the gradSafetyMargin param to be conservative. 
+% sk.sys.maxGrad = 60*1e-3 * sk.sys.gamma;  % [Hz]
+% sk.sys.maxSlew = 170     * sk.sys.gamma;  % [Hz]
 
 % sequence parameters
 seq_params = struct('trigChannel', 'osc0'); % 'osc0','osc1','ext1'
 seq_params.fov                 = 150e-3; % [m], 230e-3; 
 seq_params.N                   = 500;    % Define FOV and resolution
-seq_params.accelerationFactor  = 30;     % acceleration factor
+seq_params.accelerationFactor  = 1;     % acceleration factor
 seq_params.alpha               = 10;     % [degree] flip angle
 seq_params.alpha_fatsat        = 110;    % [degree] flip angle for fat saturation
 seq_params.thickness           = 2e-3;   % [m], slice
@@ -37,8 +39,11 @@ seq_params.maxAdcSegmentLength = 1000;   % number of ADC samples per segment pre
 % spiral design
 seq_params.isTimeOptimal            = true; % true for time optimal variable density spiral design. false for archimedean spiral design
 % seq_params.isRotationallyVariant    = true; % only in effect when seq_params.isTimeOptimal= true;
-seq_params.nSpiralInterleaves       = 1;      % number of Interleaves in trajectory design
-seq_params.nShot                    = 8;     % number of shots in real acquisition
+
+% Let's use nSpiralInterleaves as number of shots so that the
+% accelerationFactor specified will give the true acceleration factor. 
+seq_params.nSpiralInterleaves       = 30;      % number of Interleaves in trajectory design
+
 % For spiral readout design, Gmax and Smax were scaled by gradSafetyMargin due to hardware limitations.
 seq_params.gradSafetyMargin         = 0.75;   %0.94
 
