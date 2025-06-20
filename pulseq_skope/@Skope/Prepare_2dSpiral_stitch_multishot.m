@@ -306,44 +306,47 @@ switch this.seq_params.stitchMode
         counter = 1;
         for r=1:Nreps
             %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
-            this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
-            for s=1:Nslices
-                this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
-                for ishot = 1:nShots
-                    mr_gx.waveform = -spiral_grad_shape_all(ishot, 1, :);
-                    mr_gy.waveform =  spiral_grad_shape_all(ishot, 2, :);
 
+            this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
+            for ishot = 1:nShots
+                mr_gx.waveform = -spiral_grad_shape_all(ishot, 1, :);
+                mr_gy.waveform =  spiral_grad_shape_all(ishot, 2, :);
 
+                this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
+                for s=1:Nslices
+                   
                     this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
                     mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
                     mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
                     this.seq.addBlock(mr_rf,mr_gz);
                     this.seq.addBlock(mr_gzReph);
-    
+
                     this.seq.addBlock(mr.makeDelay(delayTE));
-    
+
                     if segIndexArray(counter)== 0
                         this.seq.addBlock(mr_trig, mr_gradFreeDelay)
                         this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc));
                     else
                         this.seq.addBlock(mr_gradFreeDelay);
-    
+
                         mr_trig.delay= triggerDelays(segIndexArray(counter)+ 1)- mr_gradFreeDelay.delay;
                         % disp(triggerDelays(segIndexArray(counter)+ 1))
                         this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
                     end
-    
-                    this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
-    
-                    this.seq.addBlock(mr.makeDelay(delayTR));
-    
-                    this.seq.addBlock(mr.makeLabel('INC', 'LIN', 1));
 
-                    if ishot == nShots
-                        this.seq_params.end_block = [this.seq_params.end_block, size(this.seq.blockDurations, 2)];
-                    end
+                    this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
+
+                    this.seq.addBlock(mr.makeDelay(delayTR));
+
+                    this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
                 end
-                this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
+
+                this.seq.addBlock(mr.makeLabel('INC', 'LIN', 1));
+                
+                if ishot == nShots
+                    this.seq_params.end_block = [this.seq_params.end_block, size(this.seq.blockDurations, 2)];
+                end
+
                 counter= counter+ 1;
             end
 
