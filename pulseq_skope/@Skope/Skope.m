@@ -42,6 +42,7 @@ classdef Skope < handle
         Prepare_2dEpi_moco(obj);
         Prepare_2dSpiral_moco(obj);
         Prepare_2dSpiral_stitch(obj);
+        Prepare_2dSpiral_stitch_multishot(obj);
         delayTR= calculateTiming(obj, minExcitTR);
         [gx,gy,gz,trigDelay]= createGradientTones(obj, A0,f0,tw,basegrad);
         grad= createTrapGrad(obj,basegrad,sf);
