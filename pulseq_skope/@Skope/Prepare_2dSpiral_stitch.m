@@ -273,7 +273,7 @@ switch this.seq_params.stitchMode
     case 'concurrent'
         % define a segment indices array indicating which gradient segment to measure at a
         % given TR
-        segIndexArray= zeros(1,Nreps* Nslices);
+        segIndexArray= zeros(1,Nreps* Nslices* nSpiralInterleaves);
         if nsegs2measure>1
 
             if Nreps*Nslices/nsegs2measure< 1
@@ -281,13 +281,13 @@ switch this.seq_params.stitchMode
                 disp('-> NOTE: number of repetitions is increased to map out the entire readout...')
             end
 
-            segIndexArray= repmat(0:(nsegs2measure-1), 1, ceil(Nreps*Nslices/nsegs2measure));
+            segIndexArray= repmat(0:(nsegs2measure-1), 1, ceil(Nreps*Nslices*nSpiralInterleaves/nsegs2measure));
         end
 
         this.seq_params.nDynamics= ceil(Nreps* Nslices* nSpiralInterleaves / (this.seq_params.nInterleaves));
 
         % Define sequence blocks
-
+        counter = 1;
         for r=1:Nreps
             %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
             this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
@@ -296,7 +296,6 @@ switch this.seq_params.stitchMode
                 phi= phiArray(iInterleaf);
                 this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
 
-                counter = 1;
                 for s=1:Nslices
                     this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
                     mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
