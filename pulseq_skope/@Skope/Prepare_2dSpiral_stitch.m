@@ -6,8 +6,8 @@ function Prepare_2dSpiral_stitch(this)
 this.seq_params.isSpiral = true;
 this.seq_params.resolution= this.seq_params.fov/ this.seq_params.N;
 
-isHighRes= false; 
-if this.seq_params.resolution<= 0.5e-3  
+isHighRes= false;
+if this.seq_params.resolution<= 0.5e-3
     isHighRes= true;
 end
 
@@ -32,7 +32,7 @@ probeRadius   = this.seq_params.probeRadius;
 signalCutoff  = this.seq_params.signalCutoff;
 
 
-nSpiralInterleaves= this.seq_params.nSpiralInterleaves; 
+nSpiralInterleaves= this.seq_params.nSpiralInterleaves;
 phiArray= 2*pi*((1:nSpiralInterleaves) -1)./ nSpiralInterleaves; % orientation of the readout e.g. for interleaving
 
 % Create fat-sat pulse
@@ -88,7 +88,7 @@ adcSegmentDuration=adcSamplesPerSegment*adcDwell; % with the 1000 samples above 
 adcSegments=floor(adcTime/adcSegmentDuration);
 if adcSegments> 128
     adcSamplesPerSegment= ceil(adcSegments* adcSamplesPerSegment/ 128/ 100)*100;
-    
+
     adcSegments=round(adcSamplesDesired/adcSamplesPerSegment);
     adcSamples=adcSegments*adcSamplesPerSegment;
     adcDwell=round(adcTime/adcSamples/100e-9)*100e-9; % on Siemens adcDwell needs to be aligned to 100ns (if my memory serves me right)
@@ -106,7 +106,7 @@ end
 adcSamples=adcSegments*adcSamplesPerSegment;
 mr_adc = mr.makeAdc(adcSamples,'Dwell',adcDwell);%
 
-this.seq_params.adcSegmentDuration= adcSegmentDuration; 
+this.seq_params.adcSegmentDuration= adcSegmentDuration;
 this.seq_params.adcLength= adcSamples;
 this.seq_params.nAdcSegments= adcSegments; %
 fprintf('Number of ADC segments: %d \n', this.seq_params.nAdcSegments);
@@ -190,7 +190,7 @@ end
 fprintf('-> Number of gradient segments: %d \n', nsegs2measure);
 this.seq_params.nSegments2measure= nsegs2measure;
 this.seq_params.triggerDelays= triggerDelays;
-this.seq_params.readoutGradientDuration= mr.calcDuration(mr_gx,mr_gy,mr_adc); 
+this.seq_params.readoutGradientDuration= mr.calcDuration(mr_gx,mr_gy,mr_adc);
 
 trig2AdcTime= gradFreeDelay;
 skopeAcqDuration= trig2AdcTime + segDuration + 1e-3;
@@ -208,7 +208,7 @@ if this.seq_params.skopeAcqDuration> this.sys.effProbeLifetime
     disp('-> Please consider adjusting imaging parameters (eg, decrease resolution or increase undersampling rate')
     disp('-> to avoid noisy field measurement toward the tail of the kspace trajectory...')
 end
-   
+
 
 % Prescans for sync
 if this.seq_params.nPrescans>0
@@ -287,13 +287,13 @@ switch this.seq_params.stitchMode
         this.seq_params.nDynamics= ceil(Nreps* Nslices* nSpiralInterleaves / (this.seq_params.nInterleaves));
 
         % Define sequence blocks
-       
+
         for r=1:Nreps
             %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
             this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
 
-            for iShot = 1:nSpiralInterleaves
-                phi= phiArray(iShot);
+            for iInterleaf = 1:nSpiralInterleaves
+                phi= phiArray(iInterleaf);
                 this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
 
                 counter = 1;
@@ -332,103 +332,14 @@ switch this.seq_params.stitchMode
 
         end
 
-    case 'sequential'
+    case 'sequential' % not for multi interleaves.
 
-    % Define sequence blocks
-    for r=1:Nreps
-        %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
-        this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
-
-        for s=1:Nslices
-            this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-            mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
-            mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
-            this.seq.addBlock(mr_rf,mr_gz);
-            this.seq.addBlock(mr_gzReph);
-
-            this.seq.addBlock(mr.makeDelay(delayTE));
-
-            % insert trigger
-            this.seq.addBlock(mr_trig, mr_gradFreeDelay);
-
-            this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc));
-            this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
-
-            this.seq.addBlock(mr.makeDelay(delayTR));
-
-            counter= 1;
-            while counter< nsegs2measure
-                this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                %         mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
-                %         mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
-                this.seq.addBlock(mr_rf,mr_gz);
-                this.seq.addBlock(mr_gzReph);
-
-                this.seq.addBlock(mr.makeDelay(delayTE));
-
-                % insert trigger
-                this.seq.addBlock(mr_gradFreeDelay);
-
-                mr_trig.delay= segDuration.* counter- mr_gradFreeDelay.delay;
-                this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
-                this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
-
-                this.seq.addBlock(mr.makeDelay(delayTR));
-
-                counter= counter+ 1;
-            end
-
-            this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
-        end
-
-        this.seq.addBlock(mr.makeLabel('INC','REP', 1)); %
-    end
-
-    case 'interleaved'
-    % first segment
-
-    % sequence blocks
-
-    for r=1:Nreps
-        %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
-        this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
-
-        for s=1:Nslices
-            this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-            mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
-            mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
-            this.seq.addBlock(mr_rf,mr_gz);
-            this.seq.addBlock(mr_gzReph);
-
-            this.seq.addBlock(mr.makeDelay(delayTE));
-
-            % insert trigger
-            this.seq.addBlock(mr_trig, mr_gradFreeDelay);
-
-            this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc));
-            this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
-
-            this.seq.addBlock(mr.makeDelay(delayTR));
-
-            this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
-        end
-
-        this.seq.addBlock(mr.makeLabel('INC','REP', 1)); %
-    end
-
-    % other segments
-    counter= 1;
-    while counter< nsegs2measure
-        this.seq.addBlock(mr.makeDelay(this.seq_params.interSessionDelay));
-
-        % sequence blocks
-
+        % Define sequence blocks
         for r=1:Nreps
             %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
             this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
 
             for s=1:Nslices
-
                 this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
                 mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
                 mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
@@ -438,13 +349,34 @@ switch this.seq_params.stitchMode
                 this.seq.addBlock(mr.makeDelay(delayTE));
 
                 % insert trigger
-                this.seq.addBlock(mr_gradFreeDelay);
+                this.seq.addBlock(mr_trig, mr_gradFreeDelay);
 
-                mr_trig.delay= segDuration.* counter- mr_gradFreeDelay.delay;
-                this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
+                this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc));
                 this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
 
                 this.seq.addBlock(mr.makeDelay(delayTR));
+
+                counter= 1;
+                while counter< nsegs2measure
+                    this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
+                    %         mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                    %         mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
+                    this.seq.addBlock(mr_rf,mr_gz);
+                    this.seq.addBlock(mr_gzReph);
+
+                    this.seq.addBlock(mr.makeDelay(delayTE));
+
+                    % insert trigger
+                    this.seq.addBlock(mr_gradFreeDelay);
+
+                    mr_trig.delay= segDuration.* counter- mr_gradFreeDelay.delay;
+                    this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
+                    this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
+
+                    this.seq.addBlock(mr.makeDelay(delayTR));
+
+                    counter= counter+ 1;
+                end
 
                 this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
             end
@@ -452,9 +384,95 @@ switch this.seq_params.stitchMode
             this.seq.addBlock(mr.makeLabel('INC','REP', 1)); %
         end
 
-        counter= counter+ 1;
+    case 'interleaved'
 
-    end
+        this.seq_params.nDynamics= ceil(Nreps* Nslices* nSpiralInterleaves / (this.seq_params.nInterleaves));
+        % first segment
+
+        % sequence blocks
+
+        for r=1:Nreps
+            %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
+
+            this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
+
+            for iInterleaf = 1:nSpiralInterleaves
+                phi= phiArray(iInterleaf);
+
+                this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
+                for s=1:Nslices
+                    this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
+                    mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                    mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
+                    this.seq.addBlock(mr_rf,mr_gz);
+                    this.seq.addBlock(mr_gzReph);
+
+                    this.seq.addBlock(mr.makeDelay(delayTE));
+
+                    % insert trigger
+                    this.seq.addBlock(mr_trig, mr_gradFreeDelay);
+
+                    this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc));
+                    this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
+
+                    this.seq.addBlock(mr.makeDelay(delayTR));
+
+                    this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
+                end
+
+                this.seq.addBlock(mr.makeLabel('INC','LIN', 1));
+            end
+
+            this.seq.addBlock(mr.makeLabel('INC','REP', 1)); %
+        end
+
+        % other segments
+        counter= 1;
+        while counter< nsegs2measure
+            this.seq.addBlock(mr.makeDelay(this.seq_params.interSessionDelay));
+
+            % sequence blocks
+
+            for r=1:Nreps
+                %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
+
+                this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
+
+                for iInterleaf = 1:nSpiralInterleaves
+                    phi= phiArray(iInterleaf);
+
+                    this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
+                    for s=1:Nslices
+
+                        this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
+                        mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                        mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
+                        this.seq.addBlock(mr_rf,mr_gz);
+                        this.seq.addBlock(mr_gzReph);
+
+                        this.seq.addBlock(mr.makeDelay(delayTE));
+
+                        % insert trigger
+                        this.seq.addBlock(mr_gradFreeDelay);
+
+                        mr_trig.delay= segDuration.* counter- mr_gradFreeDelay.delay;
+                        this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
+                        this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
+
+                        this.seq.addBlock(mr.makeDelay(delayTR));
+
+                        this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
+                    end
+
+                    this.seq.addBlock(mr.makeLabel('INC','LIN', 1));
+                end
+
+                this.seq.addBlock(mr.makeLabel('INC','REP', 1)); %
+            end
+
+            counter= counter+ 1;
+
+        end
 
     otherwise
         disp('-> Acquisition scheme specified is not supported... returned...')
@@ -496,7 +514,7 @@ while ~isempty(idxCutoff)
     end
 end
 
-triggerDelays= [0 cumsum(idx2measure-1).* dt]; 
+triggerDelays= [0 cumsum(idx2measure-1).* dt];
 
 end
 
