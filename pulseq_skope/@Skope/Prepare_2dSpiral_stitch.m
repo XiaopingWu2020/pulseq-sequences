@@ -32,8 +32,8 @@ probeRadius   = this.seq_params.probeRadius;
 signalCutoff  = this.seq_params.signalCutoff;
 
 
-
-phi= 0;%pi/2; % orientation of the readout e.g. for interleaving
+nSpiralInterleaves= this.seq_params.nSpiralInterleaves; 
+phiArray= 2*pi*((1:nSpiralInterleaves) -1)./ nSpiralInterleaves; % orientation of the readout e.g. for interleaving
 
 % Create fat-sat pulse
 sat_ppm=-3.45;
@@ -59,12 +59,12 @@ if ~this.seq_params.isTimeOptimal % design Archimedean spiral
     kRadius = round(N/2);
     kSamples=round(2*pi*kRadius)*Oversampling;
     adcSamplesDesired=kRadius*kSamples;
-    deltak=1/fov;
+    deltak= nSpiralInterleaves/fov;
     spiral_grad_shape= this.designArchimedean(deltak, kRadius, kSamples, safetyMargin);
 else% design time optimal spiral
     %[k,g,s,time] = designVariableDensitySpiral(this, Nitlv, isRotationallyInvariant, res, fov, radius)
     Oversampling= 10;
-    nSpiralInterleaves= this.seq_params.nSpiralInterleaves; res= this.seq_params.resolution;
+    res= this.seq_params.resolution;
     FOV= [fov fov]; radius= [0 1];
     isRotationallyVariant= false; %this.seq_params.isRotationallyVariant;
     [~,vdspiral]= this.designVariableDensitySpiral(nSpiralInterleaves,isRotationallyVariant,res,FOV,radius,safetyMargin);
@@ -287,37 +287,45 @@ switch this.seq_params.stitchMode
         this.seq_params.nDynamics= ceil(Nreps* Nslices / (this.seq_params.nInterleaves));
 
         % Define sequence blocks
-        counter = 1;
+       
         for r=1:Nreps
             %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
-            this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
+            this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
 
-            for s=1:Nslices
-                this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
-                mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
-                this.seq.addBlock(mr_rf,mr_gz);
-                this.seq.addBlock(mr_gzReph);
+            for iShot = 1:nSpiralInterleaves
+                phi= phiArray(iShot);
+                this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
 
-                this.seq.addBlock(mr.makeDelay(delayTE));
+                counter = 1;
+                for s=1:Nslices
+                    this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
+                    mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                    mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
+                    this.seq.addBlock(mr_rf,mr_gz);
+                    this.seq.addBlock(mr_gzReph);
 
-                if segIndexArray(counter)== 0
-                    this.seq.addBlock(mr_trig, mr_gradFreeDelay)
-                    this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc));
-                else
-                    this.seq.addBlock(mr_gradFreeDelay);
+                    this.seq.addBlock(mr.makeDelay(delayTE));
 
-                    mr_trig.delay= triggerDelays(segIndexArray(counter)+ 1)- mr_gradFreeDelay.delay;
-                    this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
+                    if segIndexArray(counter)== 0
+                        this.seq.addBlock(mr_trig, mr_gradFreeDelay)
+                        this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc));
+                    else
+                        this.seq.addBlock(mr_gradFreeDelay);
+
+                        mr_trig.delay= triggerDelays(segIndexArray(counter)+ 1)- mr_gradFreeDelay.delay;
+                        this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
+                    end
+
+                    this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
+
+                    this.seq.addBlock(mr.makeDelay(delayTR));
+
+                    this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
+
+                    counter= counter+ 1;
                 end
 
-                this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
-
-                this.seq.addBlock(mr.makeDelay(delayTR));
-
-                this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
-
-                counter= counter+ 1;
+                this.seq.addBlock(mr.makeLabel('INC', 'LIN', 1));
             end
 
             this.seq.addBlock(mr.makeLabel('INC','REP', 1)); %
