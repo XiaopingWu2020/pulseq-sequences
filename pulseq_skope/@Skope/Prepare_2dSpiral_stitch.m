@@ -277,7 +277,7 @@ switch this.seq_params.stitchMode
         if nsegs2measure>1
 
             if Nreps*Nslices/nsegs2measure< 1
-                Nreps= ceil(nsegs2measure./Nslices);    this.seq_params.nRepeats= Nreps;
+                Nslices= ceil(nsegs2measure./Nreps);    this.seq_params.nSlices= Nslices;
                 disp('-> NOTE: number of repetitions is increased to map out the entire readout...')
             end
 
