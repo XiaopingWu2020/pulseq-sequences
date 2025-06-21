@@ -183,7 +183,7 @@ for ii = 1:length(grads)
     % wt(1:length(waveforms{ii})) = waveforms{ii};
     % w = w + wt;
     % MZ: it is cumbersome indeed, but not so...
-    w(1:length(waveforms{ii})) = w(1:length(waveforms{ii})) + waveforms{ii};
+    w(1:length(waveforms{ii})) = w(1:length(waveforms{ii})) + waveforms{ii}.';
 end
 
 grad = mr.makeArbitraryGrad(channel, w, opt.system, ...
