@@ -123,7 +123,7 @@ end
 
 % export
 bypass=va(ibypass);
-out={bypass{:},g{:}}; 
+out=[bypass(:)',g(:)']; 
 
 nout = nargout;
 varargout = cell(1,nout);
