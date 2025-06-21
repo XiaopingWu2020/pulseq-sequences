@@ -284,7 +284,7 @@ switch this.seq_params.stitchMode
             segIndexArray= repmat(0:(nsegs2measure-1), 1, ceil(Nreps*Nslices/nsegs2measure));
         end
 
-        this.seq_params.nDynamics= ceil(Nreps* Nslices / (this.seq_params.nInterleaves));
+        this.seq_params.nDynamics= ceil(Nreps* Nslices* nSpiralInterleaves / (this.seq_params.nInterleaves));
 
         % Define sequence blocks
        
