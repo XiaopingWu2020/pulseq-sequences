@@ -303,7 +303,7 @@ switch this.seq_params.stitchMode
         % this.seq_params.nDynamics= ceil(Nreps* Nslices / (this.seq_params.nInterleaves));
 
         % Define sequence blocks
-        counter = 1;
+        
         for r=1:Nreps
             %this.seq.addBlock(mr_trigPhy, mr.makeLabel('SET','SLC', 0));
 
@@ -313,6 +313,8 @@ switch this.seq_params.stitchMode
                 mr_gy.waveform =  spiral_grad_shape_all(ishot, 2, :);
 
                 this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
+                
+                counter = 1;
                 for s=1:Nslices
                    
                     this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
@@ -339,15 +341,16 @@ switch this.seq_params.stitchMode
                     this.seq.addBlock(mr.makeDelay(delayTR));
 
                     this.seq.addBlock(mr.makeLabel('INC','SLC', 1));
+
+                    counter= counter+ 1;
                 end
 
                 this.seq.addBlock(mr.makeLabel('INC', 'LIN', 1));
-                
+
                 if ishot == nShots
                     this.seq_params.end_block = [this.seq_params.end_block, size(this.seq.blockDurations, 2)];
                 end
-
-                counter= counter+ 1;
+     
             end
 
             this.seq.addBlock(mr.makeLabel('INC','REP', 1)); %
