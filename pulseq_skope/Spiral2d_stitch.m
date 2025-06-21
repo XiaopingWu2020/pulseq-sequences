@@ -13,10 +13,6 @@ scanner_type = "Siemens dotplus 10.5T SC72CD"; %"Siemens dotplus 10.5T HG"; %"Si
 
 sk = Skope(seq_name, seq_type, scanner_type);
 
-% Gmax and Smax for conventional gradients.
-sk.sys.maxGrad = 60*1e-3 * sk.sys.gamma;  % [Hz]
-sk.sys.maxSlew = 170     * sk.sys.gamma;  % [Hz]
-
 % sequence parameters
 seq_params = struct('trigChannel', 'osc0'); % 'osc0','osc1','ext1'
 seq_params.fov                 = 150e-3; % [m], 230e-3; 
@@ -57,7 +53,7 @@ seq_params.interSessionDelay        = 6;      % [s], only used for interleaved m
 seq_params.nInterleaves             = 1;      % number of excitations per dynamic.
 seq_params.skopeMinTR               = 110e-3; % [s]
 seq_params.gradFreeDelay            = 200e-6; % [s]
-seq_params.nPrescans                = 5;      % for sync between skope and scanner
+seq_params.nPrescans                = 0;      % for sync between skope and scanner
 seq_params.useSingleAdcSegment4Sync = false;  % 
 % seq_params.doFastestPrescan         = false;  % found that the sync TR was also restricted by skope interleave TR at least on our systems true: use minimum TR; false: use a TR greater than skope interleaveTR.
 
