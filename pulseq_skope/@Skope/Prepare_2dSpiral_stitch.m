@@ -386,7 +386,8 @@ switch this.seq_params.stitchMode
 
     case 'interleaved'
 
-        this.seq_params.nDynamics= ceil(Nreps* Nslices* nSpiralInterleaves / (this.seq_params.nInterleaves));
+        segIndexArray= 0:(nsegs2measure-1);
+        this.seq_params.nDynamics= ceil(Nreps* Nslices* nSpiralInterleaves* nsegs2measure / (this.seq_params.nInterleaves));
         % first segment
 
         % sequence blocks
@@ -427,8 +428,8 @@ switch this.seq_params.stitchMode
         end
 
         % other segments
-        counter= 1;
-        while counter< nsegs2measure
+        counter= 2;
+        while counter< nsegs2measure+ 1
             this.seq.addBlock(mr.makeDelay(this.seq_params.interSessionDelay));
 
             % sequence blocks
@@ -455,7 +456,7 @@ switch this.seq_params.stitchMode
                         % insert trigger
                         this.seq.addBlock(mr_gradFreeDelay);
 
-                        mr_trig.delay= segDuration.* counter- mr_gradFreeDelay.delay;
+                        mr_trig.delay= triggerDelays(segIndexArray(counter)+ 1)- mr_gradFreeDelay.delay;
                         this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
                         this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
 
