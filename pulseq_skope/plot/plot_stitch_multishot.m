@@ -4,8 +4,8 @@ function [fig] = plot_stitch_multishot(grad0, triggerDelays, probeType, probeRad
     color_facecolor = "#1F1F1F";
     color_label     = "#CCCCCC";
     font_label      = "Arial";
-    fig_width       = 800;
-    fig_height      = 800;
+    fig_width       = 600;
+    fig_height      = 600;
     position = [(1920-fig_width)/2, (1080-fig_height)/2, fig_width, fig_height];
 
     figname = 'Stitch Pattern';
