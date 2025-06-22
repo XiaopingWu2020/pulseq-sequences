@@ -17,6 +17,7 @@ fov_x                      = this.seq_params.fov;
 Nx                         = this.seq_params.N; 
 Ny                         = Nx / this.seq_params.accelerationFactor;
 alpha                      = this.seq_params.alpha;
+alpha_fatsat               = this.seq_params.alpha_fatsat;
 thickness                  = this.seq_params.thickness;
 Nslices                    = this.seq_params.Nslices;
 TE                         = this.seq_params.TE;
@@ -34,7 +35,7 @@ partFourierFactor          = this.seq_params.partialFourier;  % partial Fourier 
 % Create fat-sat pulse
 sat_ppm     = -3.45;
 sat_freq    = sat_ppm*1e-6* this.sys.B0* this.sys.gamma;
-mr_rfFatSat = mr.makeGaussPulse(110*pi/180,'system',this.sys,'Duration',8e-3,'dwell',10e-6,...
+mr_rfFatSat = mr.makeGaussPulse(alpha_fatsat*pi/180,'system',this.sys,'Duration',8e-3,'dwell',10e-6,...
     'bandwidth',abs(sat_freq),'freqOffset',sat_freq,'use','saturation');
 mr_rfFatSat.phaseOffset=-2*pi*mr_rfFatSat.freqOffset*mr.calcRfCenter(mr_rfFatSat); % compensate for the frequency-offset induced phase
 mr_gzFatSat = mr.makeTrapezoid('z',this.sys,'delay',mr.calcDuration(mr_rfFatSat),'Area',0.1/1e-4, 'duration', 1.5e-3); % spoil up to 0.1mm
@@ -117,8 +118,8 @@ end
 mr_gxPre = mr.makeTrapezoid('x', this.sys, 'Area', -mr_gx.area/2  );
 mr_gyPre = mr.makeTrapezoid('y', this.sys, 'Area', Ny_pre*deltak_y);
 % prolong the duration slightly to decrease PNS
-mr_gxPre = mr.makeTrapezoid('x', this.sys, 'Area', -mr_gx.area/2  , 'duration', mr.calcDuration(mr_gxPre)*1.1);
-mr_gyPre = mr.makeTrapezoid('y', this.sys, 'Area', Ny_pre*deltak_y, 'duration', mr.calcDuration(mr_gyPre)*1.1);
+mr_gxPre = mr.makeTrapezoid('x', this.sys, 'Area', -mr_gx.area/2  , 'duration', mr.calcDuration(mr_gxPre)*1.2);
+mr_gyPre = mr.makeTrapezoid('y', this.sys, 'Area', Ny_pre*deltak_y, 'duration', mr.calcDuration(mr_gyPre)*1.2);
 
 % if Navigator==0
 %     [mr_gxPre,mr_gyPre]=mr.align('right',mr_gxPre,mr_gyPre);
@@ -489,11 +490,11 @@ switch this.seq_params.stitchMode
                         % fprintf('TR %d, Trigger delay: %.3f ms\n', r, TriggerDelay*1e3);
                     else
                         if i==1
-                            this.seq.addBlock(mr_trig, mr_gx, mr_gyBlipup    , mr_adc); % Read the first line of k-space with a single half-blip at the end
+                            this.seq.addBlock(mr_gx, mr_gyBlipup    , mr_adc); % Read the first line of k-space with a single half-blip at the end
                         elseif i==Ny_meas
-                            this.seq.addBlock(mr_trig, mr_gx, mr_gyBlipdown  , mr_adc); % Read the last line of k-space with a single half-blip at the beginning
+                            this.seq.addBlock(mr_gx, mr_gyBlipdown  , mr_adc); % Read the last line of k-space with a single half-blip at the beginning
                         else
-                            this.seq.addBlock(mr_trig, mr_gx, mr_gyBlipdownup, mr_adc); % Read an intermediate line of k-space with a half-blip at the beginning and a half-blip at the end
+                            this.seq.addBlock(mr_gx, mr_gyBlipdownup, mr_adc); % Read an intermediate line of k-space with a half-blip at the beginning and a half-blip at the end
                         end
                     end
                     

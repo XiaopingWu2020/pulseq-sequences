@@ -127,6 +127,8 @@ grad0.gamma= this.sys.gamma;
 fn= ['xw_sp2d-',num2str(1e3*this.seq_params.resolution,2),'mm-r',num2str(this.seq_params.accelerationFactor)];
 save([fn,'.mat'],'grad0')
 
+this.seq_params.grad0 = grad0;
+
 % readout grad
 mr_gx = mr.makeArbitraryGrad('x',(-1)* spiral_grad_shape(1,:),this.sys);
 mr_gy = mr.makeArbitraryGrad('y',spiral_grad_shape(2,:),this.sys);
