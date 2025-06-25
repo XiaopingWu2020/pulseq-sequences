@@ -119,11 +119,59 @@ fprintf('Effective ADC time (ADC time/gradient duration): %f \n', this.seq_param
 % extend spiral_grad_shape by repeating the last sample
 % this is needed to accomodate for the ADC tuning delay
 spiral_grad_shape = [spiral_grad_shape spiral_grad_shape(:,end)];
+[~, nGrad] = size(spiral_grad_shape);
 
-grad0.shape= spiral_grad_shape;
-grad0.dt= this.sys.gradRasterTime;
-grad0.unit= 'Hz/m';
-grad0.gamma= this.sys.gamma;
+t_grad0    = linspace(0.5, nGrad-0.5, nGrad)*this.seq.gradRasterTime;
+t_grad     = (0:nGrad) * this.seq.gradRasterTime;
+t_adc      = linspace(0.5, mr_adc.numSamples-0.5, mr_adc.numSamples)*mr_adc.dwell;
+
+grad_shape = interp1(t_grad0, spiral_grad_shape', t_grad, 'makima', 0);
+% figure; plot(t_grad0, spiral_grad_shape(1, :), t_grad, grad_shape(:, 1))
+k = (grad_shape(2:end, :) + grad_shape(1:end-1, :)) .* (this.sys.gradRasterTime / 2);
+k = cumsum(k, 1);
+k = [zeros(1,3); k];
+k_adc = interp1(t_grad, k, t_adc, 'makima', 0);
+
+
+plot_kspace(k', k_adc');
+
+
+grad_shape_all = zeros(nSpiralInterleaves, length(t_grad), size(spiral_grad_shape, 1));
+k_all          = zeros(nSpiralInterleaves, length(t_grad), size(spiral_grad_shape, 1));
+k_adc_all      = zeros(nSpiralInterleaves, length(t_adc ), size(spiral_grad_shape, 1));
+for iInterleaf = 1:nSpiralInterleaves
+    theta = phiArray(iInterleaf);
+    R = [cos(theta), -sin(theta), 0;
+         sin(theta),  cos(theta), 0;
+                  0,           0, 0];
+    g0 = interp1(t_grad0, (R * spiral_grad_shape)', t_grad, 'makima', 0);
+    k0 = (g0(2:end, :) + g0(1:end-1, :)) .* (this.sys.gradRasterTime / 2);
+    k0 = cumsum(k0, 1);
+    k0 = [zeros(1,3); k0];
+    
+    grad_shape_all(iInterleaf, :, :) = g0;
+    k_all(iInterleaf, :, :) = k0;
+    k_adc_all(iInterleaf, :, :) = interp1(t_grad, k0, t_adc, 'makima', 0);
+end
+
+
+grad0.nGrad    = nGrad;
+grad0.shape    = grad_shape';
+grad0.dt       = this.sys.gradRasterTime;
+grad0.unit     = 'Hz/m';
+grad0.gamma    = this.sys.gamma;
+grad0.t_grad   = t_grad; % useful for time alignment (nominal, measured, predicted...)
+grad0.t_adc    = t_adc;  % useful for recon
+grad0.t_fromEx = TE;      % for accurate calculation of t_adc from excitation
+grad0.datatime = grad0.t_adc + grad0.t_fromEx;
+grad0.k        = k;
+grad0.k_adc    = k_adc;  % useful for nominal recon
+
+grad0.shape_all = grad_shape_all;
+grad0.k_all     = k_all;
+grad0.k_adc_all = k_adc_all ; 
+this.seq_params.grad0 = grad0;
+
 fn= ['xw_sp2d-',num2str(1e3*this.seq_params.resolution,2),'mm-r',num2str(this.seq_params.accelerationFactor)];
 save([fn,'.mat'],'grad0')
 

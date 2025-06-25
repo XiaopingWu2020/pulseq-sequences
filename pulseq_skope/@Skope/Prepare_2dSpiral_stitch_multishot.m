@@ -123,6 +123,17 @@ fprintf('Effective ADC time (ADC time/gradient duration): %f \n', this.seq_param
 % extend spiral_grad_shape by repeating the last sample
 % this is needed to accomodate for the ADC tuning delay
 spiral_grad_shape = [spiral_grad_shape spiral_grad_shape(:,end)];
+[~, nGrad] = size(spiral_grad_shape);
+
+t_grad0    = linspace(0.5, nGrad-0.5, nGrad)*this.seq.gradRasterTime;
+t_grad     = (0:nGrad) * this.seq.gradRasterTime;
+t_adc      = linspace(0.5, mr_adc.numSamples-0.5, mr_adc.numSamples)*mr_adc.dwell;
+
+grad_shape = interp1(t_grad0, spiral_grad_shape', t_grad, 'makima', 0);
+k = (grad_shape(2:end, :) + grad_shape(1:end-1, :)) .* (this.sys.gradRasterTime / 2);
+k = cumsum(k, 1);
+k = [zeros(1,3); k];
+k_adc = interp1(t_grad, k, t_adc, 'makima', 0);
 
 spiral_grad_shape_all = zeros(nShots, size(spiral_grad_shape, 1), size(spiral_grad_shape, 2));
 for ishot = 1:nShots

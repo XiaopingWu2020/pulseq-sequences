@@ -22,7 +22,8 @@ seq_params.N                        = 400; %153; %92; %115;%230; %64; % Define F
 seq_params.accelerationFactor       = 6;      % acceleration factor
 seq_params.partialFourier           = 1;      % partial Fourier factor: 1: full sampling 0: start with ky=0
 
-seq_params.alpha                    = 25;     % flip angle
+seq_params.alpha                    = 25;     % [degree] flip angle
+seq_params.alpha_fatsat             = 110;    % [degree] flip angle for fat saturation
 seq_params.thickness                = 2e-3;   % slice thickness
 seq_params.Nslices                  = 1;      
 seq_params.sliceGap                 = 1;      %10; % slice gap in fraction of slice thickness. 

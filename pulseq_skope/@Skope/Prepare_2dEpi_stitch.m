@@ -210,49 +210,68 @@ for i=1:Ny_meas
     mr_gx.amplitude = -mr_gx.amplitude;   % Reverse polarity of read gradient
 end
 [gw,~,~,t_adc] = seq.waveforms_and_times();
-% figure; title('gradient wave form, in T/m');
-% plot(gw{1}(1,:),gw{1}(2,:),gw{2}(1,:),gw{2}(2,:),gw{3}(1,:),gw{3}(2,:)); % plot the entire gradient shape
 % find beginning and end times and resample GWs to a regular sampling raster
-tf = [];
-tl = [];
+t_start = 0;
+t_end   = 0;
 for i = 1:3
-    if size(gw{i}, 2) >0
-        tf(end+1) = gw{i}(1,   1);
-        tl(end+1) = gw{i}(1, end);
+    if size(gw{i}, 2) > 0
+        t_start = min(t_start, gw{i}(1,   1));
+        t_end   = max(t_end  , gw{i}(1, end));
     end
 end
-nt_min = floor(min(tf) / seq.gradRasterTime + eps); 
-nt_max = ceil( max(tl) / seq.gradRasterTime - eps);
-% shift raster positions to the centers of the raster periods
-nt_min = nt_min + 0.5;
-nt_max = nt_max - 0.5;
-if nt_min < 0.5
-    nt_min = 0.5;
-end
-t_axis     = (nt_min:nt_max) * seq.gradRasterTime;
-grad_shape = zeros(length(t_axis), 3);
+
+nGrad  = round((max(t_end))  / seq.gradRasterTime);
+t_grad = (0:nGrad) * seq.gradRasterTime;
+
+grad_shape = zeros(nGrad+1, 3);
 for i = 1:3
     if size(gw{i},2) > 0
-        grad_shape(:,i) = interp1(gw{i}(1,:), gw{i}(2,:), t_axis, 'linear', 0);
+        grad_shape(:,i) = interp1(gw{i}(1,:), gw{i}(2,:), t_grad, 'linear', 0);
     end
 end
+grad_shape(:, 1) = -grad_shape(:, 1);
+k = (grad_shape(2:end, :) + grad_shape(1:end-1, :)) .* (this.sys.gradRasterTime / 2);
+k = cumsum(k, 1);
+k = [zeros(1,3); k];
+k_adc = interp1(t_grad, k, t_adc, 'makima', 0);
+plot_kspace(k', k_adc');
 
-grad0.shape  = grad_shape';
-grad0.dt     = this.sys.gradRasterTime;
-grad0.unit   = 'Hz/m';
-grad0.gamma  = this.sys.gamma;
-grad0.t_grad = t_axis;
-grad0.t_adc  = t_adc;
-
+% it's useful to save t_grad and t_adc here.
+% t_grad start from 0, and grad_shape align with the t_grad (not the center of the dwell time)
+grad0.nGrad    = nGrad;
+grad0.shape    = grad_shape';
+grad0.dt       = this.sys.gradRasterTime;
+grad0.unit     = 'Hz/m';
+grad0.gamma    = this.sys.gamma;
+grad0.t_grad   = t_grad; % useful for time alignment (nominal, measured, predicted...)
+grad0.t_adc    = t_adc;  % useful for recon
+grad0.t_fromEx = (mr.calcDuration(mr_gz) - mr_gz.delay) / 2 + ... % for accurate calculation of t_adc from excitation
+    mr.calcDuration(mr_gzReph) + delayTE + gradFreeDelay;
+grad0.datatime = grad0.t_adc + grad0.t_fromEx;
+grad0.k        = k;
+grad0.k_adc    = k_adc;  % useful for nominal recon
 this.seq_params.grad0 = grad0;
-% fn= ['xw_sp2d-',num2str(1e3*this.seq_params.resolution,2),'mm-r',num2str(this.seq_params.accelerationFactor)];
-% save([fn,'.mat'],'grad0')
 
+%%% plot the whole EPI readout and ADC
+g = mr.convert(grad_shape, 'Hz/m', 'mT/m', 'gamma', this.sys.gamma);
+xmax = max(t_grad(end), t_adc(end))*1e3;
+ymax = max(abs(g(:)));
+figure; title('gradient wave form & ADC Sampling points');
+hold on;
+plot(t_grad*1e3, g(:, 1), 'Color', '#6699CC');
+plot(t_grad*1e3, g(:, 2), 'Color', '#FF6666');
+plot(t_grad*1e3, g(:, 3), 'Color', '#669966'); 
+plot(t_adc*1e3, 0*t_adc, '.', 'MarkerSize', 5, 'MarkerEdgeColor', '#a85144');
+legend({'Gx', 'Gy', 'Gz', 'ADC'}, 'Location', 'best');
+xlim([-1, xmax+1]);
+ylim([-1.1 * ymax, 1.1 * ymax]);
+xlabel('Time [ms]');
+ylabel('Gradient [mT/m]');
 
 %% 
 disp('=====================')
 
-grad_duration = length(grad0.t_grad) * grad0.dt;
+grad_duration = nGrad * grad0.dt;
 if ~nsegs2measure        % determine number of segments automatically
     if isHighRes % mostly dephasing dominated.
         triggerDelays = calcTriggerDelays(grad0, probeType, probeRadius, signalCutoff);
@@ -419,7 +438,7 @@ switch this.seq_params.stitchMode
                 if TriggerDelay - TimeDelay <= mr_gradFreeDelay.delay - mr_trig.duration
                     mr_trig.delay = TriggerDelay - TimeDelay;
                     this.seq.addBlock(mr_trig, mr_gradFreeDelay);
-                    % fprintf('TR %d, Trigger delay: %.3f ms\n', r, TriggerDelay*1e3);
+                    % fprintf('TR %d, Trigger delay: %.3f ms, %.3f ms\n', r, TriggerDelay*1e3, mr_trig.delay*1e3);
                 else
                     this.seq.addBlock(mr_gradFreeDelay);
                 end
@@ -431,7 +450,7 @@ switch this.seq_params.stitchMode
                     if TriggerDelay > TimeDelay && TriggerDelay - TimeDelay <= mr.calcDuration(mr_gxPre) - mr_trig.duration 
                         mr_trig.delay = TriggerDelay - TimeDelay;
                         this.seq.addBlock(mr_trig, mr_gxPre);
-                        % fprintf('TR %d, Trigger delay: %.3f ms\n', r, TriggerDelay*1e3);
+                        % fprintf('TR %d, Trigger delay: %.3f ms, %.3f ms\n', r, TriggerDelay*1e3, mr_trig.delay*1e3);
                     else
                         this.seq.addBlock(mr_gxPre);
                     end
@@ -442,7 +461,7 @@ switch this.seq_params.stitchMode
                             mr_trig.delay = TriggerDelay - TimeDelay;
                             this.seq.addBlock(mr_trig, mr_gx,mr_adc, ...
                                 mr.makeLabel('SET','REV', mr_gx.amplitude<0), mr.makeLabel('SET','SEG', mr_gx.amplitude<0), mr.makeLabel('SET','AVG',n==Navigator));
-                            % fprintf('TR %d, Trigger delay: %.3f ms\n', r, TriggerDelay*1e3);
+                            % fprintf('TR %d, Trigger delay: %.3f ms, %.3f ms\n', r, TriggerDelay*1e3, mr_trig.delay*1e3);
                         else
                             this.seq.addBlock(mr_gx,mr_adc, ...
                                 mr.makeLabel('SET','REV', mr_gx.amplitude<0), mr.makeLabel('SET','SEG', mr_gx.amplitude<0), mr.makeLabel('SET','AVG',n==Navigator));
@@ -455,7 +474,7 @@ switch this.seq_params.stitchMode
                         mr_trig.delay = TriggerDelay - TimeDelay;
                         this.seq.addBlock(mr_trig, mr_gyPre, ...
                             mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','NAV', 0), mr.makeLabel('SET','AVG', 0) );% lin/nav/avg reset
-                        % fprintf('TR %d, Trigger delay: %.3f ms\n', r, TriggerDelay*1e3);
+                        % fprintf('TR %d, Trigger delay: %.3f ms, %.3f ms\n', r, TriggerDelay*1e3, mr_trig.delay*1e3);
                     else
                         this.seq.addBlock(mr_gyPre, ...
                             mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','NAV', 0), mr.makeLabel('SET','AVG', 0) );% lin/nav/avg reset
@@ -466,7 +485,7 @@ switch this.seq_params.stitchMode
                         mr_trig.delay = TriggerDelay - TimeDelay;
                         this.seq.addBlock(mr_trig, mr_gxPre, mr_gyPre, ...
                             mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','NAV', 0), mr.makeLabel('SET','AVG', 0) );% lin/nav/avg reset
-                        % fprintf('TR %d, Trigger delay: %.3f ms\n', r, TriggerDelay*1e3);
+                        % fprintf('TR %d, Trigger delay: %.3f ms, %.3f ms\n', r, TriggerDelay*1e3, mr_trig.delay*1e3);
                     else
                         this.seq.addBlock(mr_gxPre, mr_gyPre, ...
                             mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','NAV', 0), mr.makeLabel('SET','AVG', 0) );% lin/nav/avg reset
@@ -487,7 +506,7 @@ switch this.seq_params.stitchMode
                         else
                             this.seq.addBlock(mr_trig, mr_gx, mr_gyBlipdownup, mr_adc); % Read an intermediate line of k-space with a half-blip at the beginning and a half-blip at the end
                         end
-                        % fprintf('TR %d, Trigger delay: %.3f ms\n', r, TriggerDelay*1e3);
+                        % fprintf('TR %d, Trigger delay: %.3f ms, %.3f ms\n', r, TriggerDelay*1e3, mr_trig.delay*1e3);
                     else
                         if i==1
                             this.seq.addBlock(mr_gx, mr_gyBlipup    , mr_adc); % Read the first line of k-space with a single half-blip at the end
