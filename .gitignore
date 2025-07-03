@@ -1,3 +1,4 @@
 *.mat
 *.asv
 *.seq
+!7T/7T_Terra/*.seq
