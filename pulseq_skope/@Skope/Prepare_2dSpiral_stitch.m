@@ -213,7 +213,7 @@ end
 
 
 % Prescans for sync
-if this.seq_params.nPrescans>0
+if this.seq_params.nPrescans>0 % may not work for multiple interleaves. 
 
     disp('=> Adding sync scans...')
     this.seq.addBlock(mr.makeLabel('SET','DUM', 1)); % set dummy scans
@@ -255,7 +255,7 @@ if this.seq_params.nPrescans>0
             this.seq.addBlock(mr_trig, mr_gradFreeDelay);
             %
             this.seq.addBlock(mr_gx,mr_gy,mr_adc);
-            this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil));
+            this.seq.addBlock(mr.rotate('z',phiArray(1),mr_gxSpoil,mr_gySpoil));
 
             this.seq.addBlock(mr.makeDelay(1.5e-3));
 
@@ -387,7 +387,6 @@ switch this.seq_params.stitchMode
 
     case 'interleaved'
 
-        segIndexArray= 0:(nsegs2measure-1);
         this.seq_params.nDynamics= ceil(Nreps* Nslices* nSpiralInterleaves* nsegs2measure / (this.seq_params.nInterleaves));
         % first segment
 
@@ -457,7 +456,7 @@ switch this.seq_params.stitchMode
                         % insert trigger
                         this.seq.addBlock(mr_gradFreeDelay);
 
-                        mr_trig.delay= triggerDelays(segIndexArray(counter)+ 1)- mr_gradFreeDelay.delay;
+                        mr_trig.delay= triggerDelays(counter)- mr_gradFreeDelay.delay;
                         this.seq.addBlock(mr.rotate('z',phi,mr_gx,mr_gy,mr_adc, mr_trig));
                         this.seq.addBlock(mr.rotate('z',phi,mr_gxSpoil,mr_gySpoil,mr_gzSpoil));
 
