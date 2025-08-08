@@ -119,7 +119,6 @@ fprintf('ADC dwell time (us): %f \n', 1e6*this.seq_params.adcDwellTime);
 this.seq_params.effectiveAdcTime= adcSamples* adcDwell/ adcTime;
 fprintf('Effective ADC time (ADC time/gradient duration): %f \n', this.seq_params.effectiveAdcTime);
 
-
 % extend spiral_grad_shape by repeating the last sample
 % this is needed to accomodate for the ADC tuning delay
 spiral_grad_shape = [spiral_grad_shape spiral_grad_shape(:,end)];
@@ -135,21 +134,42 @@ k = cumsum(k, 1);
 k = [zeros(1,3); k];
 k_adc = interp1(t_grad, k, t_adc, 'makima', 0);
 
-spiral_grad_shape_all = zeros(nShots, size(spiral_grad_shape, 1), size(spiral_grad_shape, 2));
+plot_kspace(k', k_adc');
+
+grad_shape_all = zeros(nShots, length(t_grad), size(spiral_grad_shape, 1));
+k_all          = zeros(nShots, length(t_grad), size(spiral_grad_shape, 1));
+k_adc_all      = zeros(nShots, length(t_adc ), size(spiral_grad_shape, 1));
 for ishot = 1:nShots
     theta = (ishot-1)/nShots*2*pi;
     R = [cos(theta), -sin(theta), 0;
          sin(theta),  cos(theta), 0;
                   0,           0, 0];
 
-    spiral_grad_shape_all(ishot, :, :) = R * spiral_grad_shape;
+    g0 = interp1(t_grad0, (R * spiral_grad_shape)', t_grad, 'makima', 0);
+    k0 = (g0(2:end, :) + g0(1:end-1, :)) .* (this.sys.gradRasterTime / 2);
+    k0 = cumsum(k0, 1);
+    k0 = [zeros(1,3); k0];
+    
+    grad_shape_all(ishot, :, :) = g0;
+    k_all(ishot, :, :) = k0;
+    k_adc_all(ishot, :, :) = interp1(t_grad, k0, t_adc, 'makima', 0);
 end
 
-grad0.shape     = spiral_grad_shape;
-grad0.shape_all = spiral_grad_shape_all;
-grad0.dt        = this.sys.gradRasterTime;
-grad0.unit      = 'Hz/m';
-grad0.gamma     = this.sys.gamma;
+grad0.nGrad    = nGrad;
+grad0.shape    = grad_shape';
+grad0.dt       = this.sys.gradRasterTime;
+grad0.unit     = 'Hz/m';
+grad0.gamma    = this.sys.gamma;
+grad0.t_grad   = repmat(t_grad, nShots, 1); % useful for time alignment (nominal, measured, predicted...)
+grad0.t_adc    = repmat(t_adc, nShots, 1);  % useful for recon
+grad0.t_fromEx = TE;      % for accurate calculation of t_adc from excitation
+grad0.datatime = grad0.t_adc + grad0.t_fromEx;
+grad0.k        = k;
+grad0.k_adc    = k_adc;  % useful for nominal recon
+
+grad0.shape_all = grad_shape_all;
+grad0.k_all     = k_all;
+grad0.k_adc_all = k_adc_all ; 
 this.seq_params.grad0 = grad0;
 % fn= ['xw_sp2d-',num2str(1e3*this.seq_params.resolution,2),'mm-r',num2str(this.seq_params.accelerationFactor)];
 % save([fn,'.mat'],'grad0')
@@ -320,8 +340,8 @@ switch this.seq_params.stitchMode
 
             this.seq.addBlock(mr.makeLabel('SET', 'LIN', 0));
             for ishot = 1:nShots
-                mr_gx.waveform = -spiral_grad_shape_all(ishot, 1, :);
-                mr_gy.waveform =  spiral_grad_shape_all(ishot, 2, :);
+                mr_gx.waveform = -grad_shape_all(ishot, 1, :);
+                mr_gy.waveform =  grad_shape_all(ishot, 2, :);
 
                 this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
                 
