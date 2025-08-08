@@ -26,7 +26,7 @@ seq_params.Nslices             = 1;
 seq_params.sliceGap            = 1;      % slice gap in fraction of slice thickness. 
 seq_params.TE                  = 5e-3;   % [s]
 seq_params.TR                  = 200e-3; % [s]
-seq_params.nRepeats            = 1;      % 
+seq_params.nRepeats            = 3;      % 
 seq_params.maxAdcSegmentLength = 1000;   % number of ADC samples per segment preferrably <=1000 and has to be <=8192.
 
 % spiral design
@@ -49,7 +49,7 @@ seq_params.stitchMode               = 'interleaved'; %'concurrent';
 % 3. interleaved: Entire sequence is repeated to measure only one gradient segment at a time throughout the sequence. 
 % Both sequential and interleaved schemes are applicable to any sequence, but at the cost of requiring a calibration longer than
 % the native scan.
-seq_params.interSessionDelay        = 1e-3;      % [s], only used for interleaved mode. 
+seq_params.interSessionDelay        = 60;%5;%1e-3;      % [s], only used for interleaved mode. 
 
 seq_params.nInterleaves             = 1;      % number of excitations per dynamic.
 seq_params.skopeMinTR               = 110e-3; % [s]
@@ -73,13 +73,19 @@ if sk.seq_params.nPrescans>0
     if sk.seq_params.useSingleAdcSegment4Sync
         fn= [fn,'-1adc4sync'];    
     end
-else
-    fn= [fn,'-noSync'];
+% else
+%     fn= [fn,'-noSync'];
 end
 
 switch sk.seq_params.stitchMode
     case 'interleaved'
         fn= [fn,'-itlv'];
+        if sk.seq_params.interSessionDelay>1
+            fn= [fn,'-ISDelay',num2str(sk.seq_params.interSessionDelay)];
+        end
+        if sk.seq_params.nRepeats>1
+            fn= [fn,'-rep',num2str(sk.seq_params.nRepeats)];
+        end
     case 'sequential'
         fn= [fn,'-seq'];
     otherwise
@@ -100,16 +106,17 @@ if 0
 end
 
 % %% tcp control
-% addpath('~/matlab/skope_TCP_client/methods')
-% host = '134.84.19.164'; %'skope-105T'
-% 
+% addpath('~/matlab/skopeTools/skope_TCP_client/methods')
+% %host = '134.84.19.164'; %'skope-105T'
+% host = '134.84.19.51'; %'skope-terra'
+% %%
 % if exist('host','var')&& ~isempty(host)
-% %     disp('                          ')
-% %     input(['If you like to do realtime field tracking for motion calibration, please go set it up on a different client. \n' ...
-% %         'Press Enter when you are ready to proceed...'],'s');
-% %     
-% %     input(['If you like to do field control, please go set it up on a different client. \n' ...
-% %         'Press Enter when you are ready to proceed...'],'s');
+%     disp('                          ')
+%     input(['If you like to do realtime field tracking for motion calibration, please go set it up on a different client. \n' ...
+%         'Press Enter when you are ready to proceed...'],'s');
+%     
+%     input(['If you like to do field control, please go set it up on a different client. \n' ...
+%         'Press Enter when you are ready to proceed...'],'s');
 % 
 %     tcpAutomateScan([fn,'.seq'], host, false);
 % end
