@@ -38,6 +38,7 @@ seq_params.gradSafetyMargin         = 0.55;   %0.94
 
 % skope relevant
 seq_params.probeType                = 'F';    % 'H' for proton, 'F' for fluorine
+seq_params.probeT2star              = 35e-3;  % T2star time of the field probe in s
 seq_params.probeRadius              = 0.4e-3; % radius of the field probe in m. 
 seq_params.signalCutoff             = 0.41;   % signal cutoff level.
 seq_params.nSegments2measure        = 0;      %1;% number of gradient segments to measure and stitch. When set to 0, number of segments will be determined automatically.

@@ -19,8 +19,8 @@ seq_params = struct('trigChannel', 'osc0'); % 'osc0','osc1','ext1'
 seq_params.fov                      = 200e-3; % [m]
 seq_params.N                        = 400; %153; %92; %115;%230; %64; % Define FOV and resolution
 
-seq_params.accelerationFactor       = 6;      % acceleration factor
-seq_params.partialFourier           = 1;      % partial Fourier factor: 1: full sampling 0: start with ky=0
+seq_params.accelerationFactor       = 5;      % acceleration factor
+seq_params.partialFourier           = 0.75;      % partial Fourier factor: 1: full sampling 0: start with ky=0
 
 seq_params.alpha                    = 25;     % [degree] flip angle
 seq_params.alpha_fatsat             = 110;    % [degree] flip angle for fat saturation
@@ -31,13 +31,14 @@ seq_params.TE                       = 22e-3;  % s
 seq_params.TR                       = 500e-3; %150e-3; % s
 seq_params.nRepeats                 = 1;
 seq_params.nNavigators              = 0;
-seq_params.readoutTime              = 13e-4;   %10e-4; % 1/bandwidthPerPixel
+seq_params.readoutTime              = 11.5e-4;   %10e-4; % 1/bandwidthPerPixel
 
 % skope relevant
 seq_params.probeType                = 'H';    % 'H' for proton, 'F' for fluorine
-seq_params.probeRadius              = 0.4e-3; % radius of the field probe in m. 
-seq_params.signalCutoff             = 0.35;   % signal cutoff level.
-seq_params.nSegments2measure        = 0;      %1;% number of gradient segments to measure and stitch. When set to 0, number of segments will be determined automatically.
+seq_params.probeT2star              = 35e-3;  % T2star time of the field probe in s
+seq_params.probeRadius              = 0.4e-3*1.2; % radius of the field probe in m. 
+seq_params.signalCutoff             = 0.5;   % signal cutoff level.
+seq_params.nSegments2measure        = -1;      %1;% number of gradient segments to measure and stitch. When set to 0, number of segments will be determined automatically.
 seq_params.isHighRes                = true;   % works when nSegments2measure is set to 0. true for "variable-segment" , false for "constant-segment"
 seq_params.stitchMode               = 'concurrent';  % only concurrent has been implemented by now.
 % 1. concurrent: No shot is repeated. In each shot, a given gradient segment is measured. 
