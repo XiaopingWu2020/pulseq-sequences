@@ -6,8 +6,8 @@ The time optimal spiral gradient design is devised using an implementation gener
 If you use the `Spiral2d_moco.m` for creating a spiral sequence, please consider citing the following abstract:
 - Wu, X., et al. "Single-shot 2D spiral imaging of the human brain at 10.5 Tesla using 128 receive channels: initial experience." ISMRM 2024, p3936.
 
-If you use the `Spiral2d_stitch.m` to create a sequence for characterizing a spiral readout using our stitching method, please consider citing the following abstract:
-- Zhang, Z., et al. "A stitching method for dynamic field monitoring using NMR probes." ISMRM 2024, p1408.
+If you use the `Spiral2d_stitch.m` to create a sequence for characterizing a spiral readout using our stitching method and/or `girf_calib.m` for GIRF measurements, please consider citing the following paper:
+- Jinyuan Zhang, Zihao Zhang*, Zhentao Zuo, Rong Xue, Yan Zhuo, Cameron Cushing, Alexander Bratch, Edward Auerbach, Andrea Grant, Jing An, Kamil Ugurbil, Xiaoping Wu. "Data stitching for dynamic field monitoring with NMR probes", MRM, under review.
 
 
 
