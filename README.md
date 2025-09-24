@@ -1,12 +1,10 @@
 # pulseq-sequences
 This is a matlab toolbox for creating MR pulse sequences in the pulseq framework that are compatible with field monitoring and motion tracking using NMR probes. 
-The toolbox is built based on pulseq sequences for field monitoring provided by Skope MRT (see below for more detail) and pulseq (see the pulseq folder for more detail). 
+The toolbox is built based on pulseq sequences for field monitoring provided by Skope MRT (see below for more detail) and pulseq (see the `pulseq` folder for more detail). 
+Skope compatible sequences are all placed under the `pulseq_skope` folder. 
 The time optimal spiral gradient design is devised using an implementation generously shared by Michael Lustig at https://people.eecs.berkeley.edu/~mlustig/Software.html. 
 
-If you use the `Spiral2d_moco.m` for creating a spiral sequence, please consider citing the following abstract:
-- Wu, X., et al. "Single-shot 2D spiral imaging of the human brain at 10.5 Tesla using 128 receive channels: initial experience." ISMRM 2024, p3936.
-
-If you use the `Spiral2d_stitch.m` to create a sequence for characterizing a spiral readout using our stitching method and/or `girf_calib.m` for GIRF measurements, please consider citing the following paper:
+If you use the code in our toolbox, please consider citing the following paper:
 - Jinyuan Zhang, Zihao Zhang*, Zhentao Zuo, Rong Xue, Yan Zhuo, Cameron Cushing, Alexander Bratch, Edward Auerbach, Andrea Grant, Jing An, Kamil Ugurbil, Xiaoping Wu. "Data stitching for dynamic field monitoring with NMR probes", MRM, under review.
 
 
