@@ -5,7 +5,7 @@ Skope compatible sequences are all placed under the `pulseq_skope` folder.
 The time optimal spiral gradient design is devised using an implementation generously shared by Michael Lustig at https://people.eecs.berkeley.edu/~mlustig/Software.html. 
 
 If you use the code in our toolbox, please consider citing the following paper:
-- Jinyuan Zhang, Zihao Zhang*, Zhentao Zuo, Rong Xue, Yan Zhuo, Cameron Cushing, Alexander Bratch, Edward Auerbach, Andrea Grant, Jing An, Kamil Ugurbil, Xiaoping Wu. "Data stitching for dynamic field monitoring with NMR probes", MRM 2025. In press.
+- Jinyuan Zhang, Zihao Zhang*, Zhentao Zuo, Rong Xue, Yan Zhuo, Cameron Cushing, Alexander Bratch, Edward Auerbach, Andrea Grant, Jing An, Kamil Ugurbil, Xiaoping Wu. "Data stitching for dynamic field monitoring with NMR probes", Magnetic Resonance in Medicine (2025): 1–15, https://doi.org/10.1002/mrm.70164.
 
 
 
