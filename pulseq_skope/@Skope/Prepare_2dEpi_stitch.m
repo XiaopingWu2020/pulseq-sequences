@@ -5,6 +5,7 @@ function Prepare_2dEpi_stitch(this)
 
 % setting for dephsing signal model
 probeType     = this.seq_params.probeType;
+probeT2star   = this.seq_params.probeT2star;
 probeRadius   = this.seq_params.probeRadius;
 signalCutoff  = this.seq_params.signalCutoff;
 
@@ -272,22 +273,31 @@ ylabel('Gradient [mT/m]');
 disp('=====================')
 
 grad_duration = nGrad * grad0.dt;
-if ~nsegs2measure        % determine number of segments automatically
-    if isHighRes % mostly dephasing dominated.
-        triggerDelays = calcTriggerDelays(grad0, probeType, probeRadius, signalCutoff);
-        segDuration   = max(diff(triggerDelays));
-        nsegs2measure = length(triggerDelays);
-        disp('-> Auto mode: High resolution scenario: ')
-    else % low resolution, mostly T2* decay dominated
-        nsegs2measure = ceil(grad_duration./ (0.9*this.sys.effProbeLifetime) );
+if nsegs2measure == -1
+    [triggerDelays, segDuration] = calcTriggerDelays_general( ...
+    grad0, probeType, probeRadius, probeT2star, signalCutoff);
+    % triggerDelays = calcTriggerDelays(grad0, probeType, probeRadius, signalCutoff);
+    % segDuration   = max(diff(triggerDelays));
+    nsegs2measure = length(triggerDelays);
+    disp('-> General mode: ')
+else
+    if ~nsegs2measure        % determine number of segments automatically
+        if isHighRes % mostly dephasing dominated.
+            triggerDelays = calcTriggerDelays(grad0, probeType, probeRadius, signalCutoff);
+            segDuration   = max(diff(triggerDelays));
+            nsegs2measure = length(triggerDelays);
+            disp('-> Auto mode: High resolution scenario: ')
+        else % low resolution, mostly T2* decay dominated
+            nsegs2measure = ceil(grad_duration./ (0.9*this.sys.effProbeLifetime) );
+            segDuration   = this.Rasterize(grad_duration./ nsegs2measure,"grad");
+            triggerDelays = (0: nsegs2measure-1).* segDuration;
+            disp('-> Auto mode: Long readout scenario: ')
+        end
+    else % manually specify segment number
         segDuration   = this.Rasterize(grad_duration./ nsegs2measure,"grad");
         triggerDelays = (0: nsegs2measure-1).* segDuration;
-        disp('-> Auto mode: Long readout scenario: ')
+        disp('-> Manual mode: ')
     end
-else % manually specify segment number
-    segDuration   = this.Rasterize(grad_duration./ nsegs2measure,"grad");
-    triggerDelays = (0: nsegs2measure-1).* segDuration;
-    disp('-> Manual mode: ')
 end
 fprintf('-> Number of gradient segments: %d \n', nsegs2measure);
 this.seq_params.nSegments2measure       = nsegs2measure;
