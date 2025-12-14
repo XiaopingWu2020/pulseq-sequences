@@ -41,7 +41,14 @@ seq_params.probeType                = 'F';    % 'H' for proton, 'F' for fluorine
 seq_params.probeT2star              = 35e-3;  % T2star time of the field probe in s
 seq_params.probeRadius              = 0.4e-3; % radius of the field probe in m. 
 seq_params.signalCutoff             = 0.41;   % signal cutoff level.
-seq_params.nSegments2measure        = 0;      %1;% number of gradient segments to measure and stitch. When set to 0, number of segments will be determined automatically.
+seq_params.nSegments2measure        = 0;      % number of gradient segments to be measured and stitched. 
+%  = 0  : Number of segments is determined using the data stitching method.
+%  = -1 : Number of segments is determined using the generalized data stitching method.
+
+seq_params.isHighRes                = true;  % works for data stitching, when nSegments2measure is set to 0.
+% true  => "Variable-segment stitching"
+% false => "Constant-segment stitching"
+
 seq_params.stitchMode               = 'interleaved'; %'concurrent'; 
 % 1. concurrent: No shot is repeated. In each shot, a given gradient segment is measured. 
 %   This scheme is compatible with concurrent field monitoring. 

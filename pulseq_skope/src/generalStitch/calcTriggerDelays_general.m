@@ -14,7 +14,7 @@ function [triggerDelays, acqDuration] = calcTriggerDelays_general( ...
     nGrad  = grad0.nGrad;
     
     acqDuration       = -probeT2star * log(signalCutoff); 
-    nPointAcqDuration = round(acqDuration/dt);
+    nPointAcqDuration = min(round(acqDuration/dt), round(t_grad(end)/dt));
     acqDuration       = nPointAcqDuration*dt;
     % the max acq duration without considering gradient induced dephasing.
     

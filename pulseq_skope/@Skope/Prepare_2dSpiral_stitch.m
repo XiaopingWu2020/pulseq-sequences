@@ -5,10 +5,9 @@ function Prepare_2dSpiral_stitch(this)
 
 this.seq_params.isSpiral = true;
 this.seq_params.resolution= this.seq_params.fov/ this.seq_params.N;
-
-isHighRes= false;
+isHighRes     = this.seq_params.isHighRes;
 if this.seq_params.resolution<= 0.5e-3
-    isHighRes= true;
+    isHighRes = true;
 end
 
 % setting for sequence parameters
