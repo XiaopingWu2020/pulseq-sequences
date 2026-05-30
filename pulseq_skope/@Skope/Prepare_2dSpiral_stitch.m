@@ -9,6 +9,13 @@ isHighRes     = this.seq_params.isHighRes;
 if this.seq_params.resolution<= 0.5e-3
     isHighRes = true;
 end
+% setting for dephsing signal model
+probeType     = this.seq_params.probeType;
+probeT2star   = this.seq_params.probeT2star;
+probeRadius   = this.seq_params.probeRadius;
+signalCutoff  = this.seq_params.signalCutoff;
+
+nsegs2measure = this.seq_params.nSegments2measure;
 
 % setting for sequence parameters
 fov           = this.seq_params.fov / this.seq_params.accelerationFactor;
@@ -17,23 +24,29 @@ alpha         = this.seq_params.alpha;
 alpha_fatsat  = this.seq_params.alpha_fatsat;
 thickness     = this.seq_params.thickness;
 Nslices       = this.seq_params.Nslices;
+sliceGap                   = this.seq_params.sliceGap / 100;
+multiSliceMode             = this.seq_params.multiSliceMode;
+
 TE            = this.seq_params.TE;
 gradFreeDelay = this.seq_params.gradFreeDelay;
-sliceGap      = this.seq_params.sliceGap;
-nsegs2measure = this.seq_params.nSegments2measure;
 safetyMargin  = this.seq_params.gradSafetyMargin;
 Nreps         = this.seq_params.nRepeats;
 adcSamplesPerSegment = this.seq_params.maxAdcSegmentLength;
 
-% setting for dephsing signal model
-probeType     = this.seq_params.probeType;
-probeT2star   = this.seq_params.probeT2star;
-probeRadius   = this.seq_params.probeRadius;
-signalCutoff  = this.seq_params.signalCutoff;
-
 
 nSpiralInterleaves= this.seq_params.nSpiralInterleaves;
 phiArray= 2*pi*((1:nSpiralInterleaves) -1)./ nSpiralInterleaves; % orientation of the readout e.g. for interleaving
+
+
+% prep slice ordering
+SliceGap = thickness * sliceGap;
+[SliceLabel, SliceOrder, SlicePositions] = prep_SlicePositions(multiSliceMode, Nslices, thickness, SliceGap);
+
+% sequence definitions: enable 2D multi-slice mode for pulseq version at least v1.4.2
+this.seq.setDefinition('SliceThickness'       , thickness                 );
+this.seq.setDefinition('SliceGap'             , SliceGap                  );
+this.seq.setDefinition('SlicePositions'       , SlicePositions            );
+this.seq.setDefinition('SliceLabel'           , SliceLabel                );
 
 % Create fat-sat pulse
 sat_ppm=-3.45;
@@ -357,7 +370,7 @@ switch this.seq_params.stitchMode
 
                 for s=1:Nslices
                     this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                    mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                    mr_rf.freqOffset=mr_gz.amplitude * SlicePositions(s);
                     mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
                     this.seq.addBlock(mr_rf,mr_gz);
                     this.seq.addBlock(mr_gzReph);
@@ -399,7 +412,7 @@ switch this.seq_params.stitchMode
 
             for s=1:Nslices
                 this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                mr_rf.freqOffset=mr_gz.amplitude * SlicePositions(s);
                 mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
                 this.seq.addBlock(mr_rf,mr_gz);
                 this.seq.addBlock(mr_gzReph);
@@ -417,8 +430,6 @@ switch this.seq_params.stitchMode
                 counter= 1;
                 while counter< nsegs2measure
                     this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                    %         mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
-                    %         mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
                     this.seq.addBlock(mr_rf,mr_gz);
                     this.seq.addBlock(mr_gzReph);
 
@@ -460,7 +471,7 @@ switch this.seq_params.stitchMode
                 this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
                 for s=1:Nslices
                     this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                    mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                    mr_rf.freqOffset=mr_gz.amplitude * SlicePositions(s);
                     mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
                     this.seq.addBlock(mr_rf,mr_gz);
                     this.seq.addBlock(mr_gzReph);
@@ -503,7 +514,7 @@ switch this.seq_params.stitchMode
                     for s=1:Nslices
 
                         this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                        mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                        mr_rf.freqOffset=mr_gz.amplitude * SlicePositions(s);
                         mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
                         this.seq.addBlock(mr_rf,mr_gz);
                         this.seq.addBlock(mr_gzReph);

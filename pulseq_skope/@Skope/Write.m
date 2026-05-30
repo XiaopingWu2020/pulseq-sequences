@@ -17,7 +17,7 @@ function Write(this, varargin)
        fov = this.seq_params.fov; N= this.seq_params.N;
        thickness = this.seq_params.thickness;
        Nslices = this.seq_params.Nslices;
-       sliceGap= this.seq_params.sliceGap;
+       sliceGap= this.seq_params.sliceGap / 100;
        flipangle= this.seq_params.alpha;
 
        this.seq.setDefinition('FOV', [fov fov (1+sliceGap)*thickness*Nslices]);

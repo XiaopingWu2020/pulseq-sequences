@@ -21,9 +21,12 @@ seq_params.accelerationFactor  = 1;     % acceleration factor
 
 seq_params.alpha               = 10;     % [degree] flip angle
 seq_params.alpha_fatsat        = 110;    % [degree] flip angle for fat saturation
-seq_params.thickness           = 2e-3;   % [m], slice
-seq_params.Nslices             = 1;      
-seq_params.sliceGap            = 1;      % slice gap in fraction of slice thickness. 
+
+seq_params.thickness                = 2e-3;   % [m], slice thickness
+seq_params.Nslices                  = 1;      % number of slices
+seq_params.sliceGap                 = 0;      % [%], slice gap in fraction of slice thickness.
+seq_params.multiSliceMode           = 'Interleaved'; % 'Interleaved' or 'Sequential'
+
 seq_params.TE                  = 5e-3;   % [s]
 seq_params.TR                  = 200e-3; % [s]
 seq_params.nRepeats            = 3;      % 
@@ -70,6 +73,7 @@ seq_params.useSingleAdcSegment4Sync = false;  %
 %%% seq_params.skopeInterleaveTR, seq_params.skopeAcqDuration, seq_params.trigger2AdcTime 
 
 sk.Prepare(seq_params);
+sk.Check_timing();
 sk.SkopeReport();
 
 fn= ['xw_sp2d-',num2str(1e3*sk.seq_params.resolution,2),'mm-r',num2str(sk.seq_params.accelerationFactor)];
@@ -100,11 +104,7 @@ switch sk.seq_params.stitchMode
 end
 
 sk.Write(fn);
-
 sk.Write('external');
-
-% Debug
-sk.Check_timing();
 
 nTRs=100;
 sk.Plot(nTRs);

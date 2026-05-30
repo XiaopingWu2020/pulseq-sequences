@@ -12,6 +12,7 @@ signalCutoff  = this.seq_params.signalCutoff;
 nsegs2measure = this.seq_params.nSegments2measure;
 isHighRes     = this.seq_params.isHighRes;
 
+% setting for sequence parameters
 this.seq_params.resolution = this.seq_params.fov / this.seq_params.N;
 fov_y                      = this.seq_params.fov / this.seq_params.accelerationFactor;
 fov_x                      = this.seq_params.fov;
@@ -21,10 +22,11 @@ alpha                      = this.seq_params.alpha;
 alpha_fatsat               = this.seq_params.alpha_fatsat;
 thickness                  = this.seq_params.thickness;
 Nslices                    = this.seq_params.Nslices;
+sliceGap                   = this.seq_params.sliceGap / 100;
+multiSliceMode             = this.seq_params.multiSliceMode;
+
 TE                         = this.seq_params.TE;
 gradFreeDelay              = this.seq_params.gradFreeDelay;
-sliceGap                   = this.seq_params.sliceGap;
-
 Nreps                      = this.seq_params.nRepeats;
 Navigator                  = this.seq_params.nNavigators;
 
@@ -32,6 +34,17 @@ pe_enable                  = 1;  % a flag to quickly disable phase encoding (1/0
 ro_os                      = 2; %1; % oversampling factor (in contrast to the product sequence we don't really need it)
 readoutTime                = this.seq_params.readoutTime;     % this controls the readout bandwidth
 partFourierFactor          = this.seq_params.partialFourier;  % partial Fourier factor: 1: full sampling 0: start with ky=0
+
+
+% prep slice ordering
+SliceGap = thickness * sliceGap;
+[SliceLabel, SliceOrder, SlicePositions] = prep_SlicePositions(multiSliceMode, Nslices, thickness, SliceGap);
+
+% sequence definitions: enable 2D multi-slice mode for pulseq version at least v1.4.2
+this.seq.setDefinition('SliceThickness'       , thickness                 );
+this.seq.setDefinition('SliceGap'             , SliceGap                  );
+this.seq.setDefinition('SlicePositions'       , SlicePositions            );
+this.seq.setDefinition('SliceLabel'           , SliceLabel                );
 
 % Create fat-sat pulse
 sat_ppm     = -3.45;
@@ -431,7 +444,7 @@ switch this.seq_params.stitchMode
             this.seq.addBlock(mr.makeLabel('SET','SLC', 0));
             for s=1:Nslices
                 this.seq.addBlock(mr_rfFatSat,mr_gzFatSat);
-                mr_rf.freqOffset=mr_gz.amplitude*(1+sliceGap)*thickness*(s-1-(Nslices-1)/2);
+                mr_rf.freqOffset=mr_gz.amplitude * SlicePositions(s);
                 mr_rf.phaseOffset=-2*pi*mr_rf.freqOffset*mr.calcRfCenter(mr_rf); % compensate for the slice-offset induced phase
                 this.seq.addBlock(mr_rf,mr_gz);
                 this.seq.addBlock(mr_gzReph, ...

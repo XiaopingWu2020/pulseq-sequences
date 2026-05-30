@@ -20,25 +20,28 @@ seq_params.fov                      = 200e-3; % [m]
 seq_params.N                        = 400; %153; %92; %115;%230; %64; % Define FOV and resolution
 
 seq_params.accelerationFactor       = 5;      % acceleration factor
-seq_params.partialFourier           = 0.75;      % partial Fourier factor: 1: full sampling 0: start with ky=0
+seq_params.partialFourier           = 0.75;   % partial Fourier factor: 1: full sampling 0: start with ky=0
 
-seq_params.alpha                    = 25;     % [degree] flip angle
-seq_params.alpha_fatsat             = 110;    % [degree] flip angle for fat saturation
-seq_params.thickness                = 2e-3;   % slice thickness
-seq_params.Nslices                  = 1;      
-seq_params.sliceGap                 = 1;      %10; % slice gap in fraction of slice thickness. 
-seq_params.TE                       = 22e-3;  % s
-seq_params.TR                       = 500e-3; %150e-3; % s
+seq_params.alpha                    = 25;     % [deg] flip angle
+seq_params.alpha_fatsat             = 110;    % [deg] flip angle for fat saturation
+
+seq_params.thickness                = 2e-3;   % [m], slice thickness
+seq_params.Nslices                  = 1;      % number of slices
+seq_params.sliceGap                 = 0;      % [%], slice gap in fraction of slice thickness.
+seq_params.multiSliceMode           = 'Interleaved'; % 'Interleaved' or 'Sequential'
+
+seq_params.TE                       = 22e-3;  % [s]
+seq_params.TR                       = 500e-3; % [s]
 seq_params.nRepeats                 = 1;
 seq_params.nNavigators              = 0;
-seq_params.readoutTime              = 11.5e-4;   %10e-4; % 1/bandwidthPerPixel
+seq_params.readoutTime              = 11.5e-4;  % [s], 1/bandwidthPerPixel
 
 % skope relevant
 seq_params.probeType                = 'H';    % 'H' for proton, 'F' for fluorine
 seq_params.probeT2star              = 35e-3;  % T2star time of the field probe in s
 seq_params.probeRadius              = 0.4e-3*1.2; % radius of the field probe in m. 
 seq_params.signalCutoff             = 0.5;   % signal cutoff level.
-seq_params.nSegments2measure        = -1;    % number of gradient segments to be measured and stitched. 
+seq_params.nSegments2measure        = 1;    % number of gradient segments to be measured and stitched. 
 %  = 0  : Number of segments is determined using the data stitching method.
 %  = -1 : Number of segments is determined using the generalized data stitching method.
 
@@ -67,6 +70,7 @@ seq_params.useSingleAdcSegment4Sync = false;  %true; %
 %%% seq_params.skopeInterleaveTR, seq_params.skopeAcqDuration, seq_params.trigger2AdcTime 
 
 sk.Prepare(seq_params);
+sk.Check_timing();
 sk.SkopeReport();
 
 fn= ['xw_ep2d-',num2str(1e3*sk.seq_params.resolution,2),'mm-r',num2str(sk.seq_params.accelerationFactor)];
@@ -93,8 +97,6 @@ else
 
 end
 
-% Debug
-sk.Check_timing();
 
 nTRs=5;
 sk.Plot(nTRs);
