@@ -19,8 +19,8 @@ seq_params.fov                 = 150e-3; % [m], 230e-3;
 seq_params.N                   = 500;    % Define FOV and resolution
 seq_params.accelerationFactor  = 1;     % acceleration factor
 
-seq_params.alpha               = 10;     % [degree] flip angle
-seq_params.alpha_fatsat        = 110;    % [degree] flip angle for fat saturation
+seq_params.alpha               = 10;     % [degree], flip angle
+seq_params.alpha_fatsat        = 110;    % [degree], flip angle for fat saturation
 
 seq_params.thickness                = 2e-3;   % [m], slice thickness
 seq_params.Nslices                  = 1;      % number of slices
@@ -41,8 +41,8 @@ seq_params.gradSafetyMargin         = 0.55;   %0.94
 
 % skope relevant
 seq_params.probeType                = 'F';    % 'H' for proton, 'F' for fluorine
-seq_params.probeT2star              = 35e-3;  % T2star time of the field probe in s
-seq_params.probeRadius              = 0.4e-3; % radius of the field probe in m. 
+seq_params.probeT2star              = 35e-3;  % [s], T2star time of the field probe in s
+seq_params.probeRadius              = 0.4e-3; % [m], radius of the field probe in m. 
 seq_params.signalCutoff             = 0.41;   % signal cutoff level.
 seq_params.nSegments2measure        = 0;      % number of gradient segments to be measured and stitched. 
 %  = 0  : Number of segments is determined using the data stitching method.
@@ -60,7 +60,7 @@ seq_params.stitchMode               = 'interleaved'; %'concurrent';
 % 3. interleaved: Entire sequence is repeated to measure only one gradient segment at a time throughout the sequence. 
 % Both sequential and interleaved schemes are applicable to any sequence, but at the cost of requiring a calibration longer than
 % the native scan.
-seq_params.interSessionDelay        = 60;%5;%1e-3;      % [s], only used for interleaved mode. 
+seq_params.interSessionDelay        = 60; % [s], only used for interleaved mode. 
 
 seq_params.nInterleaves             = 1;      % number of excitations per dynamic.
 seq_params.skopeMinTR               = 110e-3; % [s]

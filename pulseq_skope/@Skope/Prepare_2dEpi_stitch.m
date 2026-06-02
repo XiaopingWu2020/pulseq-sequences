@@ -39,6 +39,9 @@ partFourierFactor          = this.seq_params.partialFourier;  % partial Fourier 
 % prep slice ordering
 SliceGap = thickness * sliceGap;
 [SliceLabel, SliceOrder, SlicePositions] = prep_SlicePositions(multiSliceMode, Nslices, thickness, SliceGap);
+this.seq_params.SliceGap       = SliceGap;
+this.seq_params.SliceLabel     = SliceLabel;
+this.seq_params.SlicePositions = SlicePositions;
 
 % sequence definitions: enable 2D multi-slice mode for pulseq version at least v1.4.2
 this.seq.setDefinition('SliceThickness'       , thickness                 );

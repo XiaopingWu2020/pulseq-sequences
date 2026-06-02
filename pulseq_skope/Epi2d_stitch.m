@@ -17,13 +17,13 @@ sk = Skope(seq_name, seq_type, scanner_type);
 % sequence parameters
 seq_params = struct('trigChannel', 'osc0'); % 'osc0','osc1','ext1'
 seq_params.fov                      = 200e-3; % [m]
-seq_params.N                        = 400; %153; %92; %115;%230; %64; % Define FOV and resolution
+seq_params.N                        = 400; % Define FOV and resolution
 
 seq_params.accelerationFactor       = 5;      % acceleration factor
 seq_params.partialFourier           = 0.75;   % partial Fourier factor: 1: full sampling 0: start with ky=0
 
-seq_params.alpha                    = 25;     % [deg] flip angle
-seq_params.alpha_fatsat             = 110;    % [deg] flip angle for fat saturation
+seq_params.alpha                    = 25;     % [deg], flip angle
+seq_params.alpha_fatsat             = 110;    % [deg], flip angle for fat saturation
 
 seq_params.thickness                = 2e-3;   % [m], slice thickness
 seq_params.Nslices                  = 1;      % number of slices
@@ -38,8 +38,8 @@ seq_params.readoutTime              = 11.5e-4;  % [s], 1/bandwidthPerPixel
 
 % skope relevant
 seq_params.probeType                = 'H';    % 'H' for proton, 'F' for fluorine
-seq_params.probeT2star              = 35e-3;  % T2star time of the field probe in s
-seq_params.probeRadius              = 0.4e-3*1.2; % radius of the field probe in m. 
+seq_params.probeT2star              = 35e-3;  % [s], T2star time of the field probe in s
+seq_params.probeRadius              = 0.4e-3*1.2; % [m], radius of the field probe in m. 
 seq_params.signalCutoff             = 0.5;   % signal cutoff level.
 seq_params.nSegments2measure        = 1;    % number of gradient segments to be measured and stitched. 
 %  = 0  : Number of segments is determined using the data stitching method.
@@ -60,10 +60,10 @@ seq_params.stitchMode               = 'concurrent';  % only concurrent has been 
 
 seq_params.interSessionDelay        = 6;      % [s], only used for interleaved mode. 
 seq_params.nInterleaves             = 1;      % number of excitations per dynamic.
-seq_params.skopeMinTR               = 110e-3; % s
-seq_params.gradFreeDelay            = 200e-6; % s
+seq_params.skopeMinTR               = 110e-3; % [s]
+seq_params.gradFreeDelay            = 200e-6; % [s]
 seq_params.nPrescans                = 5;      % for sync between skope and scanner
-seq_params.useSingleAdcSegment4Sync = false;  %true; % 
+seq_params.useSingleAdcSegment4Sync = false;  
 % seq_params.doFastestPrescan         = false;  % true: use minimum TR; false: use a TR greater than skope interleaveTR.
 
 %%% sequence will calculate the following parameters:
